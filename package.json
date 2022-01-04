@@ -1,0 +1,13 @@
+{
+  "name": "sitemod-files",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.mjs",
+  "type": "module",
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "archiver": "^5.3.0"
+  }
+}
