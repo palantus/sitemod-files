@@ -3,6 +3,7 @@ const { Router, Request, Response } = express;
 const route = Router();
 import Entity from "entitystorage";
 import { findDangerousChanges } from "graphql";
+import {validateAccess} from "../../../../services/auth.mjs"
 
 export default (app) => {
 
@@ -12,14 +13,17 @@ export default (app) => {
   let toObj = fs => (fs ? { id: fs._id, title: fs.title, existsUrl: fs.existsUrl || null, downloadUrl: fs.downloadUrl, detailsUrl: fs.detailsUrl || null, apiKeyParm: fs.apiKeyParm || null } : null)
 
   route.get('/', async function (req, res, next) {
+    if(!validateAccess(req, res, {role: "admin"})) return;
     res.json(Entity.search("tag:filesource").map(toObj));
   });
   route.get('/:id', async function (req, res, next) {
     if (!req.params.id) { res.sendStatus(404); return; }
+    if(!validateAccess(req, res, {role: "admin"})) return;
     res.json(toObj(Entity.find(`tag:filesource id:${req.params.id}`)));
   });
 
   route.post('/', async function (req, res, next) {
+    if(!validateAccess(req, res, {role: "admin"})) return;
     if (!req.body.title || !req.body.downloadUrl)
       throw "title and downloadUrl are mandatory for file sources"
     let e = new Entity()
@@ -33,6 +37,7 @@ export default (app) => {
   });
 
   route.patch('/:id', async function (req, res, next) {
+    if(!validateAccess(req, res, {role: "admin"})) return;
     let e = Entity.find(`tag:filesource id:${req.params.id}`)
     if (!e) { res.sendStatus(404); return; }
 
@@ -45,6 +50,7 @@ export default (app) => {
   });
 
   route.delete('/:id', async function (req, res, next) {
+    if(!validateAccess(req, res, {role: "admin"})) return;
     let e = Entity.find(`tag:filesource id:${req.params.id}`)
     if (!e) { res.sendStatus(404); return; }
     e.delete();

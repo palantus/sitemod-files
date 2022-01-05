@@ -1,6 +1,6 @@
 const elementName = 'files-page'
 
-import api from "/system/api.mjs"
+import {default as api, userRoles} from "/system/api.mjs"
 import "/components/action-bar.mjs"
 import "/components/action-bar-item.mjs"
 import "/components/field-ref.mjs"
@@ -21,6 +21,7 @@ template.innerHTML = `
     #container{
         position: relative;
     }
+    .hidden{display: none;}
     table{
       width: 100%;
     }
@@ -39,10 +40,10 @@ template.innerHTML = `
   </style>  
 
   <action-bar>
-      <action-bar-item id="new-btn">Upload file(s)</action-bar-item>
-      <action-bar-item id="add-folder">Add folder</action-bar-item>
-      <action-bar-item id="download-folder">Download all</action-bar-item>
-      <action-bar-item id="delete-all-btn">Delete all</action-bar-item>
+      <action-bar-item id="new-btn" class="hidden">Upload file(s)</action-bar-item>
+      <action-bar-item id="add-folder" class="hidden">Add folder</action-bar-item>
+      <action-bar-item id="download-folder" title="Only downloads files in current folder. It does not allow download of folders.">Download all files</action-bar-item>
+      <action-bar-item id="delete-all-btn" class="hidden">Delete all</action-bar-item>
   </action-bar>
 
   <div id="container">
@@ -103,6 +104,14 @@ class Element extends HTMLElement {
     })
 
     this.query = ""
+
+    userRoles().then(roles => {
+      if(roles.includes("team")){
+        this.shadowRoot.getElementById("new-btn").classList.remove("hidden")
+        this.shadowRoot.getElementById("add-folder").classList.remove("hidden")
+        this.shadowRoot.getElementById("delete-all-btn").classList.remove("hidden")
+      }
+    })
   }
   async refreshData(){
     let result = await api.get(`file/query?filter=${this.lastQuery}`)
