@@ -1,6 +1,6 @@
 const elementName = 'file-page'
 
-import {state} from "/system/core.mjs"
+import {state, siteURL, apiURL} from "/system/core.mjs"
 import api from "/system/api.mjs"
 import "/components/field-edit.mjs"
 import "/components/field-ref.mjs"
@@ -19,8 +19,11 @@ template.innerHTML = `
     #container{
       padding: 10px;
     }
-    field-list{
+    #fields-list{
       width: 400px;
+    }
+    #links-list{
+      max-width: 800px;
     }
     h3{margin-top: 20px;}
     .subheader{text-decoration: underline;}
@@ -40,7 +43,7 @@ template.innerHTML = `
     
   <div id="container">
     <h2>File: <span id="title"></span></h2>
-    <field-list labels-pct="25">
+    <field-list id="fields-list" labels-pct="25">
       <field-edit type="text" label="Name" id="name"></field-edit>
       <field-edit type="text" label="Mime type" id="mime"></field-edit>
       <field-edit type="text" label="Hash" id="hash" disabled></field-edit>
@@ -56,6 +59,12 @@ template.innerHTML = `
       </tbody>
     </table>
     <button class="styled" id="add" title="Add tag">Add</button>
+
+    <h3 class="subheader">Links:</h3>
+    <field-list id="links-list" labels-pct="25">
+      <field-edit type="text" label="Raw link" id="url-raw" disabled></field-edit>
+      <field-edit type="text" label="Temp external (~2 days)" id="url-external" disabled></field-edit>
+    </field-list>
 
     <h3 class="subheader">Preview:</h3>
     <div id="preview"></div>
@@ -79,7 +88,7 @@ class Element extends HTMLElement {
     this.shadowRoot.getElementById("add").addEventListener("click", this.add)
     this.shadowRoot.getElementById("tags").addEventListener("click", this.click)
 
-    this.fileId = /(\d+)/.exec(state().path)[0]
+    this.fileId = /([\da-zA-Z]+)/.exec(state().path.split("/")[2])[0]
   }
 
   async refreshData(id = this.fileId){
@@ -100,6 +109,10 @@ class Element extends HTMLElement {
                       <td>${tag}</td>
                       <td><button class="del">Remove</button></td>
                   </tr>`).join("")
+
+
+    this.shadowRoot.getElementById('url-raw').setAttribute("value", file.links.raw)
+    this.shadowRoot.getElementById('url-external').setAttribute("value", file.links.download)
 
     this.shadowRoot.getElementById("tagstab").classList.toggle("empty", file.tags.length < 1)
     this.shadowRoot.querySelectorAll("field-edit:not([disabled])").forEach(e => e.setAttribute("patch", `file/${file.id}`));

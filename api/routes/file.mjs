@@ -11,6 +11,7 @@ import Archiver from 'archiver';
 import moment from "moment"
 import {service as userService} from "../../../../services/user.mjs"
 import {validateAccess} from "../../../../services/auth.mjs"
+import {config} from "../../../../loaders/express.mjs"
 
 export default (app) => {
 
@@ -119,7 +120,7 @@ export default (app) => {
   })
 
   route.get(['/dl/:id', '/dl/:id/:filename'], function (req, res, next) {
-    let file = Entity.find(`id:${req.params.id} tag:file !tag:folder`)
+    let file = Entity.find(`(id:${req.params.id}|prop:"hash=${req.params.id}") tag:file !tag:folder`)
     if (!file) throw "Unknown file";
 
     res.setHeader('Content-disposition', `attachment; filename=${file.name}`);
@@ -231,7 +232,10 @@ export default (app) => {
         hash: file.hash || null,
         mime: file.mime || null,
         tags: file.tags.filter(t => t.startsWith("user-")).map(t => t.substr(5)),
-        download: `${axmURL}/file/download/${file._id}${file.name ? `/${encodeURI(file.name)}` : ''}?token=${userService.getTempAuthToken(res.locals.user)}`,
+        links: {
+          download: `${config().apiURL}/file/download/${file._id}${file.name ? `/${encodeURI(file.name)}` : ''}?token=${userService.getTempAuthToken(res.locals.user)}`,
+          raw: `${config().apiURL}/file/raw/${file._id}${file.name ? `/${encodeURI(file.name)}` : ''}?token=${userService.getTempAuthToken(res.locals.user)}`,
+        }
       });
       return;
     }
@@ -249,7 +253,10 @@ export default (app) => {
       hash: req.params.id,
       filename: filename || "Unknown_filename",
       size: file.details?.result?.size || file.details?.size || null,
-      download: `${axmURL}/file/download/${file.id}${filename ? `/${encodeURI(filename)}` : ''}?token=${userService.getTempAuthToken(res.locals.user)}`,
+      links: {
+        download: `${config().apiURL}/file/download/${file.id}${filename ? `/${encodeURI(filename)}` : ''}?token=${userService.getTempAuthToken(res.locals.user)}`,
+        raw: `${config().apiURL}/file/raw/${file.id}${filename ? `/${encodeURI(filename)}` : ''}?token=${userService.getTempAuthToken(res.locals.user)}`,
+      },
       fileSource: {
         id: src._id,
         title: src.title
