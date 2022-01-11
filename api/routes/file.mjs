@@ -104,6 +104,26 @@ export default (app) => {
     res.json(files)
   })
 
+  route.post("/upload-single", function (req, res, next) {
+    if(!validateAccess(req, res, {role: "team"})) return;
+    if(!req.query.tags) throw "Tags in the query are mandatory"
+    if(req.files.length < 1) throw "No file sent"
+    let filedef = req.files[0]
+    let fileObj = Array.isArray(req.files[filedef]) ? req.files[filedef] : [req.files[filedef]]
+    if(fileObj.length < 1) throw "No files in obj"
+    let f = fileObj[0]
+    let file = new Entity().tag("file")
+      .prop("name", f.name)
+      .prop("size", f.size)
+      .prop("hash", f.md5)
+      .prop("mime", f.mimetype)
+      .prop("timestamp", getTimestamp())
+      .tag(req.query.tags.split(",").map(t => `user-${t}`))
+      .setBlob(f.data)
+
+      res.json({id: file._id, hash: file.hash})
+  })
+
   route.post("/:id/folders", function (req, res, next) {
     if(!validateAccess(req, res, {role: "team"})) return;
     if (!req.body.name) throw "name is mandatory"
