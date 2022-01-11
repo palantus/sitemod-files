@@ -62,6 +62,7 @@ template.innerHTML = `
 
     <h3 class="subheader">Links:</h3>
     <field-list id="links-list" labels-pct="25">
+      <field-edit type="text" label="Wiki reference" id="wiki-ref" disabled></field-edit>
       <field-edit type="text" label="Raw link" id="url-raw" disabled></field-edit>
       <field-edit type="text" label="Temp external (~2 days)" id="url-external" disabled></field-edit>
     </field-list>
@@ -110,9 +111,9 @@ class Element extends HTMLElement {
                       <td><button class="del">Remove</button></td>
                   </tr>`).join("")
 
-
     this.shadowRoot.getElementById('url-raw').setAttribute("value", file.links.raw)
     this.shadowRoot.getElementById('url-external').setAttribute("value", file.links.download)
+    this.shadowRoot.getElementById('wiki-ref').setAttribute("value", `[${file.filename.replace(/\_/g, "\\_")}](/file/${file.id})`)
 
     this.shadowRoot.getElementById("tagstab").classList.toggle("empty", file.tags.length < 1)
     this.shadowRoot.querySelectorAll("field-edit:not([disabled])").forEach(e => e.setAttribute("patch", `file/${file.id}`));

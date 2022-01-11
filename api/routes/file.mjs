@@ -107,8 +107,9 @@ export default (app) => {
   route.post("/upload-single", function (req, res, next) {
     if(!validateAccess(req, res, {role: "team"})) return;
     if(!req.query.tags) throw "Tags in the query are mandatory"
-    if(req.files.length < 1) throw "No file sent"
-    let filedef = req.files[0]
+    if(Object.keys(req.files).length < 1) throw "No file sent"
+    
+    let filedef = Object.keys(req.files)[0]
     let fileObj = Array.isArray(req.files[filedef]) ? req.files[filedef] : [req.files[filedef]]
     if(fileObj.length < 1) throw "No files in obj"
     let f = fileObj[0]
@@ -121,7 +122,12 @@ export default (app) => {
       .tag(req.query.tags.split(",").map(t => `user-${t}`))
       .setBlob(f.data)
 
-      res.json({id: file._id, hash: file.hash})
+      res.json({
+        id: file._id, 
+        hash: file.hash,
+        filename: f.name,
+        downloadUrl: `${config().apiURL}/file/download/${file._id}${file.name ? `/${encodeURI(file.name)}` : ''}?token=${userService.getTempAuthToken(res.locals.user)}`
+      })
   })
 
   route.post("/:id/folders", function (req, res, next) {
