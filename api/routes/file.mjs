@@ -117,7 +117,7 @@ export default (app) => {
       if(fileObj.length < 1) throw "No files in obj"
       f = fileObj[0]
     } else if(req.query.hash){
-      f = {name: "file", size: parseInt(req.header("Content-Length")), md5: req.query.hash, mimetype: req.query.mime || "application/x-binary", data: req}
+      f = {name: req.query.name||"file", size: parseInt(req.header("Content-Length")), md5: req.query.hash, mimetype: req.query.mime || "application/x-binary", data: req}
     }
 
     if(!f) throw "Invalid file"
