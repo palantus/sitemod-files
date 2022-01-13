@@ -104,23 +104,12 @@ export default (app) => {
     res.json(files)
   })
 
-  route.post("/upload-single", function (req, res, next) {
+  route.post("/upload-basic", function (req, res, next) {
     if(!validateAccess(req, res, {role: "team"})) return;
     if(!req.query.tags) throw "Tags in the query are mandatory"
+    if(!req.query.hash) throw "Must provide hash in query";
     
-    let f = null;
-    if(req.files){
-      if(Object.keys(req.files).length < 1) throw "No file sent"
-      
-      let filedef = Object.keys(req.files)[0]
-      let fileObj = Array.isArray(req.files[filedef]) ? req.files[filedef] : [req.files[filedef]]
-      if(fileObj.length < 1) throw "No files in obj"
-      f = fileObj[0]
-    } else if(req.query.hash){
-      f = {name: req.query.name||"file", size: parseInt(req.header("Content-Length")), md5: req.query.hash, mimetype: req.query.mime || "application/x-binary", data: req}
-    }
-
-    if(!f) throw "Invalid file"
+    let f = {name: req.query.name||"file", size: parseInt(req.header("Content-Length")), md5: req.query.hash, mimetype: req.query.mime || "application/x-binary", data: req}
 
     let file = new Entity().tag("file")
       .prop("name", f.name)
@@ -134,8 +123,7 @@ export default (app) => {
       res.json({
         id: file._id, 
         hash: file.hash,
-        filename: f.name,
-        downloadUrl: `${config().apiURL}/file/download/${file._id}${file.name ? `/${encodeURI(file.name)}` : ''}?token=${userService.getTempAuthToken(res.locals.user)}`
+        filename: f.name
       })
   })
 
