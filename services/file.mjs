@@ -124,10 +124,9 @@ class Service {
     */
   }
 
-  async search(query) {
+  search(query) {
     if(!this.parser){
       this.parser = new SearchQueryParser()
-      await this.parser.init()
     }
 
     this.tags = new Set()
