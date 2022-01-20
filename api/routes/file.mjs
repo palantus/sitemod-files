@@ -23,6 +23,7 @@ export default (app) => {
   })
 
   route.get(['/download/:id', '/download/:id/:filename'], async function (req, res, next) {
+    if(!validateAccess(req, res, {permission: "file.read"})) return;
 
     // First check local files
     let file = Entity.find(`(id:${req.params.id}|prop:"hash=${req.params.id}") tag:file !tag:folder`)
@@ -55,6 +56,7 @@ export default (app) => {
   });
 
   route.get("/tag/:tag", function (req, res, next) {
+    if(!validateAccess(req, res, {permission: "file.read"})) return;
     let items = Entity.search(`tag:file tag:"user-${req.params.tag}"`)
     res.json(items.map(i => ({
       id: i._id,
@@ -68,6 +70,7 @@ export default (app) => {
   })
 
   route.get("/query", async function (req, res, next) {
+    if(!validateAccess(req, res, {permission: "file.read"})) return;
     let result = await fileService.search(req.query.filter)
     res.json({
       tags: result.tags,
@@ -84,7 +87,7 @@ export default (app) => {
   })
 
   route.post("/tag/:tag/upload", function (req, res, next) {
-    if(!validateAccess(req, res, {role: "team"})) return;
+    if(!validateAccess(req, res, {permission: "file.upload"})) return;
     let files = []
     for (let filedef in req.files) {
       let fileObj = Array.isArray(req.files[filedef]) ? req.files[filedef] : [req.files[filedef]]
@@ -105,7 +108,7 @@ export default (app) => {
   })
 
   route.post("/upload-basic", function (req, res, next) {
-    if(!validateAccess(req, res, {role: "team"})) return;
+    if(!validateAccess(req, res, {permission: "file.upload"})) return;
     if(!req.query.tags) throw "Tags in the query are mandatory"
     if(!req.query.hash) throw "Must provide hash in query";
     
@@ -128,7 +131,7 @@ export default (app) => {
   })
 
   route.post("/:id/folders", function (req, res, next) {
-    if(!validateAccess(req, res, {role: "team"})) return;
+    if(!validateAccess(req, res, {permission: "file.edit"})) return;
     if (!req.body.name) throw "name is mandatory"
     let parent = req.params.id != "root" ? Entity.find(`id:${req.params.id} tag:file`) : null
     let child = new Entity().tag("file")
@@ -143,6 +146,7 @@ export default (app) => {
   })
 
   route.get(['/dl/:id', '/dl/:id/:filename'], function (req, res, next) {
+    if(!validateAccess(req, res, {permission: "file.read"})) return;
     let file = Entity.find(`(id:${req.params.id}|prop:"hash=${req.params.id}") tag:file !tag:folder`)
     if (!file) throw "Unknown file";
 
@@ -154,6 +158,7 @@ export default (app) => {
   });
 
   route.get(['/raw/:id', '/raw/:id/:filename'], async function (req, res, next) {
+    if(!validateAccess(req, res, {permission: "file.read"})) return;
     let file = Entity.find(`id:${req.params.id} tag:file !tag:folder`)
     if (!file) throw "Unknown file";
 
@@ -165,6 +170,7 @@ export default (app) => {
   });
 
   route.get('/query/dl', async function (req, res, next) {
+    if(!validateAccess(req, res, {permission: "file.read"})) return;
     let files = (await fileService.search(req.query.filter)).results.filter(f => !f.tags.includes("folder"))
     if (files.length < 1) throw "No files in filter";
 
@@ -184,7 +190,7 @@ export default (app) => {
   });
 
   route.delete('/query', async function (req, res, next) {
-    if(!validateAccess(req, res, {role: "team"})) return;
+    if(!validateAccess(req, res, {permission: "file.edit"})) return;
     let files = await fileService.search(req.query.filter)
     if (files.results.length < 1) return res.json(true);
 
@@ -195,7 +201,7 @@ export default (app) => {
   });
 
   route.patch('/:id', function (req, res, next) {
-    if(!validateAccess(req, res, {role: "team"})) return;
+    if(!validateAccess(req, res, {permission: "file.edit"})) return;
     let file = Entity.find(`(id:${req.params.id}|prop:"hash=${req.params.id}") tag:file`)
     if(!file) throw "Unknown file"
 
@@ -214,7 +220,7 @@ export default (app) => {
   })
 
   route.post('/:id/tags', function (req, res, next) {
-    if(!validateAccess(req, res, {role: "team"})) return;
+    if(!validateAccess(req, res, {permission: "file.edit"})) return;
     let file = Entity.find(`(id:${req.params.id}|prop:"hash=${req.params.id}") tag:file !tag:folder`)
     if(!file) throw "Unknown file"
     if(!req.body.tag) throw "No tag provided"
@@ -225,7 +231,7 @@ export default (app) => {
   })
 
   route.delete('/:id/tags/:tag', function (req, res, next) {
-    if(!validateAccess(req, res, {role: "team"})) return;
+    if(!validateAccess(req, res, {permission: "file.edit"})) return;
     let file = Entity.find(`(id:${req.params.id}|prop:"hash=${req.params.id}") tag:file !tag:folder`)
     if(!file) throw "Unknown file"
     if(!req.params.tag) throw "No tag provided"
@@ -236,7 +242,7 @@ export default (app) => {
   })
 
   route.delete('/:id', function (req, res, next) {
-    if(!validateAccess(req, res, {role: "team"})) return;
+    if(!validateAccess(req, res, {permission: "file.edit"})) return;
     let file = Entity.find(`(id:${req.params.id}|prop:"hash=${req.params.id}") tag:file`)
     if(!file) throw "Unknown file"
     file.delete();
@@ -245,6 +251,7 @@ export default (app) => {
   })
 
   route.get('/:id', async function (req, res, next) {
+    if(!validateAccess(req, res, {permission: "file.read"})) return;
     let file = Entity.find(`(id:${req.params.id}|prop:"hash=${req.params.id}") tag:file`)
     if (file) {
       res.json({
@@ -288,7 +295,7 @@ export default (app) => {
   });
 
   route.get('/check/:id', async function (req, res, next) {
-    if(!validateAccess(req, res, {role: "team"})) return;
+    if(!validateAccess(req, res, {permission: "file.source.manage"})) return;
     res.json(await service.findFileAll(req.params.id))
   });
 };
