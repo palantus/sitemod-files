@@ -1,5 +1,5 @@
 import SearchQueryParser from "searchqueryparser"
-import Entity from "entitystorage"
+import Entity, { isFilterValid } from "entitystorage"
 import fileSourceService from "./filesource.mjs"
 import { getTimestamp } from "../../../tools/date.mjs"
 import fetch from "node-fetch"
@@ -92,39 +92,10 @@ class Service {
 
   parseToken(tag, token) {
     return tokens.find(t => t.keywords.includes(tag ? tag.toLowerCase() : null))?.resolve(token, tag, this) || (token == "*" ? "*" : "id:-20")
-    /*
-    switch (tag ? tag.toLowerCase() : undefined) {
-      case "id":
-        return `id:${token}`
-      case "tag":
-        this.tags.add(token)
-        return `tag:"user-${token}"`
-      case "type":
-        return token == "folder" ? "tag:folder" : "!tag:folder"
-      case "ext":
-        return `prop:"name=.${token}^"`
-      case "folder":
-        if (token == "root" || !token)
-          return "tag:folder !parent.tag:folder"
-
-        let folder = Entity.find(`tag:folder (id:"${token}"|prop:"name=${token}")`)
-        if(folder && folder.filter){
-          let ast = this.parser.parse(folder.filter)
-          let q = this.parseE(ast);
-          return `(parent.id:${folder}|${q})`;
-        }
-
-        return `(parent.id:${token}|parent.prop:"name=${token}")`
-
-      case undefined:
-        return token == "*" ? "!id:-20" : `prop:name~${token}`
-      default:
-        return token == "*" ? "*" : "id:-20"
-    }
-    */
   }
 
   search(query) {
+    if(!isFilterValid(query)) return { results: [], tags: []};
     if(!this.parser){
       this.parser = new SearchQueryParser()
     }

@@ -1,10 +1,9 @@
 import express from "express"
 const { Router, Request, Response } = express;
 const route = Router();
-import Entity from "entitystorage"
+import Entity, { sanitize } from "entitystorage"
 import service from "../../services/filesource.mjs"
 import fetch from 'node-fetch'
-import { axmURL } from "../../../../api/routes/auth.mjs";
 import { getTimestamp } from "../../../../tools/date.mjs"
 import {default as fileService, tokens} from "../../services/file.mjs"
 import Archiver from 'archiver';
@@ -26,7 +25,8 @@ export default (app) => {
     if(!validateAccess(req, res, {permission: "file.read"})) return;
 
     // First check local files
-    let file = Entity.find(`(id:${req.params.id}|prop:"hash=${req.params.id}") tag:file !tag:folder`)
+    let id = sanitize(req.params.id)
+    let file = Entity.find(`(id:${id}|prop:"hash=${id}") tag:file !tag:folder`)
     if (file) {
       res.setHeader('Content-disposition', `attachment; filename=${file.name}`);
       res.setHeader('Content-Type', file.mime);
@@ -36,7 +36,7 @@ export default (app) => {
     }
 
     // Then check all file sources
-    file = await service.findFile(req.params.id)
+    file = await service.findFile(id)
     if (!file) {
       res.sendStatus(404);
       return;
@@ -57,7 +57,7 @@ export default (app) => {
 
   route.get("/tag/:tag", function (req, res, next) {
     if(!validateAccess(req, res, {permission: "file.read"})) return;
-    let items = Entity.search(`tag:file tag:"user-${req.params.tag}"`)
+    let items = Entity.search(`tag:file tag:"user-${sanitize(req.params.tag)}"`)
     res.json(items.map(i => ({
       id: i._id,
       type: i.tags.includes("folder") ? "folder" : "file",
@@ -69,9 +69,9 @@ export default (app) => {
     })))
   })
 
-  route.get("/query", async function (req, res, next) {
+  route.get("/query", function (req, res, next) {
     if(!validateAccess(req, res, {permission: "file.read"})) return;
-    let result = await fileService.search(req.query.filter)
+    let result = fileService.search(req.query.filter)
     res.json({
       tags: result.tags,
       results: result.results.map(i => ({
@@ -133,7 +133,7 @@ export default (app) => {
   route.post("/:id/folders", function (req, res, next) {
     if(!validateAccess(req, res, {permission: "file.edit"})) return;
     if (!req.body.name) throw "name is mandatory"
-    let parent = req.params.id != "root" ? Entity.find(`id:${req.params.id} tag:file`) : null
+    let parent = req.params.id != "root" ? Entity.find(`id:${sanitize(req.params.id)} tag:file`) : null
     let child = new Entity().tag("file")
       .tag("folder")
       .prop("name", req.body.name)
@@ -147,7 +147,7 @@ export default (app) => {
 
   route.get(['/dl/:id', '/dl/:id/:filename'], function (req, res, next) {
     if(!validateAccess(req, res, {permission: "file.read"})) return;
-    let file = Entity.find(`(id:${req.params.id}|prop:"hash=${req.params.id}") tag:file !tag:folder`)
+    let file = Entity.find(`(id:${sanitize(req.params.id)}|prop:"hash=${sanitize(req.params.id)}") tag:file !tag:folder`)
     if (!file) throw "Unknown file";
 
     res.setHeader('Content-disposition', `attachment; filename=${file.name}`);
@@ -159,7 +159,7 @@ export default (app) => {
 
   route.get(['/raw/:id', '/raw/:id/:filename'], async function (req, res, next) {
     if(!validateAccess(req, res, {permission: "file.read"})) return;
-    let file = Entity.find(`id:${req.params.id} tag:file !tag:folder`)
+    let file = Entity.find(`id:${sanitize(req.params.id)} tag:file !tag:folder`)
     if (!file) throw "Unknown file";
 
     res.setHeader('Content-disposition', `inline; filename=${file.name}`);
@@ -202,7 +202,7 @@ export default (app) => {
 
   route.patch('/:id', function (req, res, next) {
     if(!validateAccess(req, res, {permission: "file.edit"})) return;
-    let file = Entity.find(`(id:${req.params.id}|prop:"hash=${req.params.id}") tag:file`)
+    let file = Entity.find(`(id:${sanitize(req.params.id)}|prop:"hash=${sanitize(req.params.id)}") tag:file`)
     if(!file) throw "Unknown file"
 
     if(req.body.name !== undefined && req.body.name) file.name = req.body.name
@@ -221,7 +221,7 @@ export default (app) => {
 
   route.post('/:id/tags', function (req, res, next) {
     if(!validateAccess(req, res, {permission: "file.edit"})) return;
-    let file = Entity.find(`(id:${req.params.id}|prop:"hash=${req.params.id}") tag:file !tag:folder`)
+    let file = Entity.find(`(id:${sanitize(req.params.id)}|prop:"hash=${sanitize(req.params.id)}") tag:file !tag:folder`)
     if(!file) throw "Unknown file"
     if(!req.body.tag) throw "No tag provided"
 
@@ -232,7 +232,7 @@ export default (app) => {
 
   route.delete('/:id/tags/:tag', function (req, res, next) {
     if(!validateAccess(req, res, {permission: "file.edit"})) return;
-    let file = Entity.find(`(id:${req.params.id}|prop:"hash=${req.params.id}") tag:file !tag:folder`)
+    let file = Entity.find(`(id:${sanitize(req.params.id)}|prop:"hash=${sanitize(req.params.id)}") tag:file !tag:folder`)
     if(!file) throw "Unknown file"
     if(!req.params.tag) throw "No tag provided"
 
@@ -243,7 +243,7 @@ export default (app) => {
 
   route.delete('/:id', function (req, res, next) {
     if(!validateAccess(req, res, {permission: "file.edit"})) return;
-    let file = Entity.find(`(id:${req.params.id}|prop:"hash=${req.params.id}") tag:file`)
+    let file = Entity.find(`(id:${sanitize(req.params.id)}|prop:"hash=${sanitize(req.params.id)}") tag:file`)
     if(!file) throw "Unknown file"
     file.delete();
 
@@ -252,7 +252,7 @@ export default (app) => {
 
   route.get('/:id', async function (req, res, next) {
     if(!validateAccess(req, res, {permission: "file.read"})) return;
-    let file = Entity.find(`(id:${req.params.id}|prop:"hash=${req.params.id}") tag:file`)
+    let file = Entity.find(`(id:${sanitize(req.params.id)}|prop:"hash=${sanitize(req.params.id)}") tag:file`)
     if (file) {
       res.json({
         id: file._id,
@@ -270,7 +270,7 @@ export default (app) => {
       return;
     }
 
-    file = await service.findFile(req.params.id)
+    file = await service.findFile(sanitize(req.params.id))
     if (!file) {
       res.sendStatus(404);
       return;
@@ -296,6 +296,6 @@ export default (app) => {
 
   route.get('/check/:id', async function (req, res, next) {
     if(!validateAccess(req, res, {permission: "file.source.manage"})) return;
-    res.json(await service.findFileAll(req.params.id))
+    res.json(await service.findFileAll(sanitize(req.params.id)))
   });
 };

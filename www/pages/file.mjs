@@ -177,7 +177,7 @@ class Element extends HTMLElement {
 
   async downloadFile(){
     if(typeof window.showSaveFilePicker === "undefined") { //Firefox
-      window.open(this.file.download)
+      window.open(this.file.links?.download)
       return;
     }
     
