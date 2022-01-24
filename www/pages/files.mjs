@@ -115,10 +115,11 @@ class Element extends HTMLElement {
   }
   async refreshData(){
     let result = await api.get(`file/query?filter=${this.lastQuery}`)
+    if(!result) return this.shadowRoot.querySelector('table tbody').innerHTML = ''
     this.tags = result.tags;
     this.files = result.results;
     this.shadowRoot.querySelector('table tbody').innerHTML = result.results.sort((a, b) => {
-      return a.type == b.type ? (a.filename.toLowerCase() < b.filename.toLowerCase() ? -1 : 1)
+      return a.type == b.type ? (a.filename?.toLowerCase() < b.filename?.toLowerCase() ? -1 : 1)
                               : a.type == "folder" ? -1 : 1
     }).map(f => `
         <tr class="result" data-id="${f.id}" data-name="${f.filename}">
