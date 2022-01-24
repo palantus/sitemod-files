@@ -3,6 +3,7 @@ import Entity, { isFilterValid } from "entitystorage"
 import fileSourceService from "./filesource.mjs"
 import { getTimestamp } from "../../../tools/date.mjs"
 import fetch from "node-fetch"
+import File from "../models/file.mjs"
 
 export let tokens = [
   {keywords: ["id"], title: "Search for Id", resolve: token => `id:${token}`},
@@ -54,7 +55,7 @@ class Service {
 
   async fetchFile(hash){
     // First check local files
-    let file = Entity.find(`(id:${hash}|prop:"hash=${hash}") tag:file !tag:folder`)
+    let file = File.lookup(hash)
     if (file) {
       return {filename: file.name, mime: file.mime, size: file.size, blob: file.blob}
     }

@@ -19,7 +19,7 @@ export default (app) => {
   route.get('/:id', async function (req, res, next) {
     if (!req.params.id) { res.sendStatus(404); return; }
     if(!validateAccess(req, res, {permission: "file.source.manage"})) return;
-    res.json(toObj(Entity.find(`tag:filesource id:${sanitize(req.params.id)}`)));
+    res.json(toObj(Entity.find(`tag:filesource id:"${sanitize(req.params.id)}"`)));
   });
 
   route.post('/', async function (req, res, next) {
@@ -38,7 +38,7 @@ export default (app) => {
 
   route.patch('/:id', async function (req, res, next) {
     if(!validateAccess(req, res, {permission: "file.source.manage"})) return;
-    let e = Entity.find(`tag:filesource id:${sanitize(req.params.id)}`)
+    let e = Entity.find(`tag:filesource id:"${sanitize(req.params.id)}"`)
     if (!e) { res.sendStatus(404); return; }
 
     if (req.body.title) e.title = req.body.title
@@ -51,7 +51,7 @@ export default (app) => {
 
   route.delete('/:id', async function (req, res, next) {
     if(!validateAccess(req, res, {permission: "file.source.manage"})) return;
-    let e = Entity.find(`tag:filesource id:${sanitize(req.params.id)}`)
+    let e = Entity.find(`tag:filesource id:"${sanitize(req.params.id)}"`)
     if (!e) { res.sendStatus(404); return; }
     e.delete();
     res.json(true);

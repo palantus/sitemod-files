@@ -133,7 +133,7 @@ export default (app) => {
   route.post("/:id/folders", function (req, res, next) {
     if(!validateAccess(req, res, {permission: "file.edit"})) return;
     if (!req.body.name) throw "name is mandatory"
-    let parent = req.params.id != "root" ? Entity.find(`id:${sanitize(req.params.id)} tag:file`) : null
+    let parent = req.params.id != "root" ? Entity.find(`id:"${sanitize(req.params.id)}" tag:file`) : null
     let child = new Entity().tag("file")
       .tag("folder")
       .prop("name", req.body.name)
@@ -147,7 +147,7 @@ export default (app) => {
 
   route.get(['/dl/:id', '/dl/:id/:filename'], function (req, res, next) {
     if(!validateAccess(req, res, {permission: "file.read"})) return;
-    let file = Entity.find(`(id:${sanitize(req.params.id)}|prop:"hash=${sanitize(req.params.id)}") tag:file !tag:folder`)
+    let file = Entity.find(`(id:"${sanitize(req.params.id)}"|prop:"hash=${sanitize(req.params.id)}") tag:file !tag:folder`)
     if (!file) throw "Unknown file";
 
     res.setHeader('Content-disposition', `attachment; filename=${file.name}`);
@@ -159,7 +159,7 @@ export default (app) => {
 
   route.get(['/raw/:id', '/raw/:id/:filename'], async function (req, res, next) {
     if(!validateAccess(req, res, {permission: "file.read"})) return;
-    let file = Entity.find(`id:${sanitize(req.params.id)} tag:file !tag:folder`)
+    let file = Entity.find(`id:"${sanitize(req.params.id)}" tag:file !tag:folder`)
     if (!file) throw "Unknown file";
 
     res.setHeader('Content-disposition', `inline; filename=${file.name}`);
@@ -202,7 +202,7 @@ export default (app) => {
 
   route.patch('/:id', function (req, res, next) {
     if(!validateAccess(req, res, {permission: "file.edit"})) return;
-    let file = Entity.find(`(id:${sanitize(req.params.id)}|prop:"hash=${sanitize(req.params.id)}") tag:file`)
+    let file = Entity.find(`(id:"${sanitize(req.params.id)}"|prop:"hash=${sanitize(req.params.id)}") tag:file`)
     if(!file) throw "Unknown file"
 
     if(req.body.name !== undefined && req.body.name) file.name = req.body.name
@@ -221,7 +221,7 @@ export default (app) => {
 
   route.post('/:id/tags', function (req, res, next) {
     if(!validateAccess(req, res, {permission: "file.edit"})) return;
-    let file = Entity.find(`(id:${sanitize(req.params.id)}|prop:"hash=${sanitize(req.params.id)}") tag:file !tag:folder`)
+    let file = Entity.find(`(id:"${sanitize(req.params.id)}"|prop:"hash=${sanitize(req.params.id)}") tag:file !tag:folder`)
     if(!file) throw "Unknown file"
     if(!req.body.tag) throw "No tag provided"
 
@@ -232,7 +232,7 @@ export default (app) => {
 
   route.delete('/:id/tags/:tag', function (req, res, next) {
     if(!validateAccess(req, res, {permission: "file.edit"})) return;
-    let file = Entity.find(`(id:${sanitize(req.params.id)}|prop:"hash=${sanitize(req.params.id)}") tag:file !tag:folder`)
+    let file = Entity.find(`(id:"${sanitize(req.params.id)}"|prop:"hash=${sanitize(req.params.id)}") tag:file !tag:folder`)
     if(!file) throw "Unknown file"
     if(!req.params.tag) throw "No tag provided"
 
@@ -243,7 +243,7 @@ export default (app) => {
 
   route.delete('/:id', function (req, res, next) {
     if(!validateAccess(req, res, {permission: "file.edit"})) return;
-    let file = Entity.find(`(id:${sanitize(req.params.id)}|prop:"hash=${sanitize(req.params.id)}") tag:file`)
+    let file = Entity.find(`(id:"${sanitize(req.params.id)}"|prop:"hash=${sanitize(req.params.id)}") tag:file`)
     if(!file) throw "Unknown file"
     file.delete();
 
@@ -252,7 +252,7 @@ export default (app) => {
 
   route.get('/:id', async function (req, res, next) {
     if(!validateAccess(req, res, {permission: "file.read"})) return;
-    let file = Entity.find(`(id:${sanitize(req.params.id)}|prop:"hash=${sanitize(req.params.id)}") tag:file`)
+    let file = Entity.find(`(id:"${sanitize(req.params.id)}"|prop:"hash=${sanitize(req.params.id)}") tag:file`)
     if (file) {
       res.json({
         id: file._id,
