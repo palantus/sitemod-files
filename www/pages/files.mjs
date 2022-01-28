@@ -1,6 +1,6 @@
 const elementName = 'files-page'
 
-import {default as api, userRoles} from "/system/api.mjs"
+import {default as api, userPermissions} from "/system/api.mjs"
 import "/components/action-bar.mjs"
 import "/components/action-bar-item.mjs"
 import "/components/field-ref.mjs"
@@ -105,9 +105,11 @@ class Element extends HTMLElement {
 
     this.query = ""
 
-    userRoles().then(roles => {
-      if(roles.includes("team")){
+    userPermissions().then(permissions => {
+      if(permissions.includes("file.upload")){
         this.shadowRoot.getElementById("new-btn").classList.remove("hidden")
+      }
+      if(permissions.includes("file.edit")){
         this.shadowRoot.getElementById("add-folder").classList.remove("hidden")
         this.shadowRoot.getElementById("delete-all-btn").classList.remove("hidden")
       }

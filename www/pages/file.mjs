@@ -1,7 +1,7 @@
 const elementName = 'file-page'
 
-import {state, siteURL, apiURL} from "/system/core.mjs"
-import api from "/system/api.mjs"
+import {state} from "/system/core.mjs"
+import {default as api, userPermissions} from "/system/api.mjs"
 import "/components/field-edit.mjs"
 import "/components/field-ref.mjs"
 import "/components/field-list.mjs"
@@ -34,11 +34,12 @@ template.innerHTML = `
     #preview img{
       width: 100%;
     }
+    .hidden{display: none;}
   </style>
 
   <action-bar>
     <action-bar-item id="download-btn">Download file</action-bar-item>
-    <action-bar-item id="delete-btn">Delete file</action-bar-item>
+    <action-bar-item id="delete-btn" class="hidden">Delete file</action-bar-item>
   </action-bar>
     
   <div id="container">
@@ -90,6 +91,12 @@ class Element extends HTMLElement {
     this.shadowRoot.getElementById("tags").addEventListener("click", this.click)
 
     this.fileId = /([\da-zA-Z]+)/.exec(state().path.split("/")[2])[0]
+
+    userPermissions().then(permissions => {
+      if(permissions.includes("file.edit")){
+        this.shadowRoot.getElementById("delete-btn").classList.remove("hidden")
+      }
+    })
   }
 
   async refreshData(id = this.fileId){
