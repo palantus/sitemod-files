@@ -48,7 +48,7 @@ template.innerHTML = `
 
   <div id="container">
     <input id="search" type="text" placeholder="Enter query" value=""></input>
-    <searchhelp-component path="/file/searchhelp"></searchhelp-component>
+    <searchhelp-component path="file/searchhelp"></searchhelp-component>
     
     <table>
         <thead>

@@ -10,7 +10,6 @@ import Archiver from 'archiver';
 import moment from "moment"
 import {service as userService} from "../../../../services/user.mjs"
 import {validateAccess} from "../../../../services/auth.mjs"
-import {config} from "../../../../loaders/express.mjs"
 
 export default (app) => {
 
@@ -263,8 +262,8 @@ export default (app) => {
         mime: file.mime || null,
         tags: file.tags.filter(t => t.startsWith("user-")).map(t => t.substr(5)),
         links: {
-          download: `${config().apiURL}/file/download/${file._id}${file.name ? `/${encodeURI(file.name)}` : ''}?token=${userService.getTempAuthToken(res.locals.user)}`,
-          raw: `${config().apiURL}/file/raw/${file._id}${file.name ? `/${encodeURI(file.name)}` : ''}?token=${userService.getTempAuthToken(res.locals.user)}`,
+          download: `${global.sitecore.apiURL}/file/download/${file._id}${file.name ? `/${encodeURI(file.name)}` : ''}?token=${userService.getTempAuthToken(res.locals.user)}`,
+          raw: `${global.sitecore.apiURL}/file/raw/${file._id}${file.name ? `/${encodeURI(file.name)}` : ''}?token=${userService.getTempAuthToken(res.locals.user)}`,
         }
       });
       return;
@@ -284,8 +283,8 @@ export default (app) => {
       filename: filename || "Unknown_filename",
       size: file.details?.result?.size || file.details?.size || null,
       links: {
-        download: `${config().apiURL}/file/download/${file.id}${filename ? `/${encodeURI(filename)}` : ''}?token=${userService.getTempAuthToken(res.locals.user)}`,
-        raw: `${config().apiURL}/file/raw/${file.id}${filename ? `/${encodeURI(filename)}` : ''}?token=${userService.getTempAuthToken(res.locals.user)}`,
+        download: `${global.sitecore.apiURL}/file/download/${file.id}${filename ? `/${encodeURI(filename)}` : ''}?token=${userService.getTempAuthToken(res.locals.user)}`,
+        raw: `${global.sitecore.apiURL}/file/raw/${file.id}${filename ? `/${encodeURI(filename)}` : ''}?token=${userService.getTempAuthToken(res.locals.user)}`,
       },
       fileSource: {
         id: src._id,
