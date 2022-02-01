@@ -255,7 +255,7 @@ export default (app) => {
     res.json(true)
   })
 
-  route.get('/:id', function (req, res, next) {
+  route.get('/:id', async function (req, res, next) {
     if(!validateAccess(req, res, {permission: "file.read"})) return;
     let file = Entity.find(`(id:"${sanitize(req.params.id)}"|prop:"hash=${sanitize(req.params.id)}") tag:file`)
     if (file) {
@@ -275,7 +275,12 @@ export default (app) => {
       return;
     }
 
-    file = await service.findFile(sanitize(req.params.id))
+    try{
+      file = await service.findFile(sanitize(req.params.id))
+    } catch(err){
+      console.log(err)
+    }
+    
     if (!file) {
       res.sendStatus(404);
       return;
