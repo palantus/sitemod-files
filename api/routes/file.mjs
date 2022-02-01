@@ -23,35 +23,41 @@ export default (app) => {
   route.get(['/download/:id', '/download/:id/:filename'], async function (req, res, next) {
     if(!validateAccess(req, res, {permission: "file.read"})) return;
 
-    // First check local files
-    let id = sanitize(req.params.id)
-    let file = Entity.find(`(id:${id}|prop:"hash=${id}") tag:file !tag:folder`)
-    if (file) {
-      res.setHeader('Content-disposition', `attachment; filename=${file.name}`);
-      res.setHeader('Content-Type', file.mime);
-      res.setHeader('Content-Length', file.size);
-      file.blob.pipe(res)
-      return;
-    }
+    try {
+      // First check local files
+      let id = sanitize(req.params.id)
+      let file = Entity.find(`(id:${id}|prop:"hash=${id}") tag:file !tag:folder`)
+      if (file) {
+        res.setHeader('Content-disposition', `attachment; filename=${file.name}`);
+        res.setHeader('Content-Type', file.mime);
+        res.setHeader('Content-Length', file.size);
+        file.blob.pipe(res)
+        return;
+      }
 
-    // Then check all file sources
-    file = await service.findFile(id)
-    if (!file) {
-      res.sendStatus(404);
-      return;
-    }
-    let filename = file.details?.result?.filename || file.details?.filename || null
-    let src = Entity.find(`tag:filesource id:${file.fileSource.id}`)
-    let downloadUrl = src.downloadUrl.replace("$hash$", file.id);
-    let url = service.applyApiKeyParm(downloadUrl, Entity.find(`tag:filesource id:${src._id}`).apiKeyParm)
+      // Then check all file sources
+      file = await service.findFile(id)
+      if (!file) {
+        res.sendStatus(404);
+        return;
+      }
+      let filename = file.details?.result?.filename || file.details?.filename || null
+      let src = Entity.find(`tag:filesource id:${file.fileSource.id}`)
+      let downloadUrl = src.downloadUrl.replace("$hash$", file.id);
+      let url = service.applyApiKeyParm(downloadUrl, Entity.find(`tag:filesource id:${src._id}`).apiKeyParm)
 
-    let r = await fetch(url, { headers: { 'Origin': req.header("Origin") } })
-    res.writeHead(200, {
-      "Content-Disposition": r.headers.get("Content-Disposition"),
-      'Content-Type': r.headers.get("Content-Type"),
-      'Content-Length': r.headers.get("Content-Length")
-    })
-    r.body.pipe(res)
+      let r = await fetch(url, { headers: { 'Origin': req.header("Origin") } })
+      res.writeHead(200, {
+        "Content-Disposition": r.headers.get("Content-Disposition"),
+        'Content-Type': r.headers.get("Content-Type"),
+        'Content-Length': r.headers.get("Content-Length")
+      })
+      r.body.pipe(res)
+      
+    } catch(err){
+      console.log(err)
+      res.status(501).json({success: false, error: "Server failure"})
+    }
   });
 
   route.get("/tag/:tag", function (req, res, next) {
@@ -156,7 +162,7 @@ export default (app) => {
     file.blob.pipe(res)
   });
 
-  route.get(['/raw/:id', '/raw/:id/:filename'], async function (req, res, next) {
+  route.get(['/raw/:id', '/raw/:id/:filename'], function (req, res, next) {
     if(!validateAccess(req, res, {permission: "file.read"})) return;
     let file = Entity.find(`id:"${sanitize(req.params.id)}" tag:file !tag:folder`)
     if (!file) throw "Unknown file";
@@ -168,9 +174,9 @@ export default (app) => {
     file.blob.pipe(res)
   });
 
-  route.get('/query/dl', async function (req, res, next) {
+  route.get('/query/dl', function (req, res, next) {
     if(!validateAccess(req, res, {permission: "file.read"})) return;
-    let files = (await fileService.search(req.query.filter)).results.filter(f => !f.tags.includes("folder"))
+    let files = fileService.search(req.query.filter).results.filter(f => !f.tags.includes("folder"))
     if (files.length < 1) throw "No files in filter";
 
     let zip = Archiver('zip');
@@ -188,9 +194,9 @@ export default (app) => {
     zip.finalize()
   });
 
-  route.delete('/query', async function (req, res, next) {
+  route.delete('/query', function (req, res, next) {
     if(!validateAccess(req, res, {permission: "file.edit"})) return;
-    let files = await fileService.search(req.query.filter)
+    let files = fileService.search(req.query.filter)
     if (files.results.length < 1) return res.json(true);
 
     for (let file of files.results) {
@@ -249,7 +255,7 @@ export default (app) => {
     res.json(true)
   })
 
-  route.get('/:id', async function (req, res, next) {
+  route.get('/:id', function (req, res, next) {
     if(!validateAccess(req, res, {permission: "file.read"})) return;
     let file = Entity.find(`(id:"${sanitize(req.params.id)}"|prop:"hash=${sanitize(req.params.id)}") tag:file`)
     if (file) {
@@ -295,6 +301,11 @@ export default (app) => {
 
   route.get('/check/:id', async function (req, res, next) {
     if(!validateAccess(req, res, {permission: "file.source.manage"})) return;
-    res.json(await service.findFileAll(sanitize(req.params.id)))
+    try{
+      res.json(await service.findFileAll(sanitize(req.params.id)))
+    } catch(err){
+      console.log(err)
+      res.status(501).json({success: false, error: "Server failure"})
+    }
   });
 };

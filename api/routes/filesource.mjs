@@ -12,17 +12,17 @@ export default (app) => {
 
   let toObj = fs => (fs ? { id: fs._id, title: fs.title, existsUrl: fs.existsUrl || null, downloadUrl: fs.downloadUrl, detailsUrl: fs.detailsUrl || null, apiKeyParm: fs.apiKeyParm || null } : null)
 
-  route.get('/', async function (req, res, next) {
+  route.get('/', function (req, res, next) {
     if(!validateAccess(req, res, {permission: "file.source.manage"})) return;
     res.json(Entity.search("tag:filesource").map(toObj));
   });
-  route.get('/:id', async function (req, res, next) {
+  route.get('/:id', function (req, res, next) {
     if (!req.params.id) { res.sendStatus(404); return; }
     if(!validateAccess(req, res, {permission: "file.source.manage"})) return;
     res.json(toObj(Entity.find(`tag:filesource id:"${sanitize(req.params.id)}"`)));
   });
 
-  route.post('/', async function (req, res, next) {
+  route.post('/', function (req, res, next) {
     if(!validateAccess(req, res, {permission: "file.source.manage"})) return;
     if (!req.body.title || !req.body.downloadUrl)
       throw "title and downloadUrl are mandatory for file sources"
@@ -36,7 +36,7 @@ export default (app) => {
     res.json(toObj(e));
   });
 
-  route.patch('/:id', async function (req, res, next) {
+  route.patch('/:id', function (req, res, next) {
     if(!validateAccess(req, res, {permission: "file.source.manage"})) return;
     let e = Entity.find(`tag:filesource id:"${sanitize(req.params.id)}"`)
     if (!e) { res.sendStatus(404); return; }
@@ -49,7 +49,7 @@ export default (app) => {
     res.json(toObj(e));
   });
 
-  route.delete('/:id', async function (req, res, next) {
+  route.delete('/:id', function (req, res, next) {
     if(!validateAccess(req, res, {permission: "file.source.manage"})) return;
     let e = Entity.find(`tag:filesource id:"${sanitize(req.params.id)}"`)
     if (!e) { res.sendStatus(404); return; }
