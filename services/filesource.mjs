@@ -5,27 +5,34 @@ class FileSourceService{
   static async findFileAll(id){
     let promiseResults = await Promise.all(Entity.search(`tag:filesource`).map(fs => {
       return new Promise(async resolve => {
+        let exists = false;
+        let res;
+        let details = null;
         let url = (fs.detailsUrl || fs.existsUrl || fs.downloadUrl).replace("$hash$", id)
         let urlForFetch = FileSourceService.applyApiKeyParm(url, fs.apiKeyParm)
-        let res = await fetch(urlForFetch)
-        let exists = res.status == 200
-        let body = null
-        if(exists){
-          if(res.headers.get("content-type") == "application/json"){
-            body = await res.json()
-            exists = body?.result === false || body?.success === false ? false : true
-          } else {
-            body = await res.text()
-            exists = body === "false" ? false : true;
+
+        try{
+          res = await fetch(urlForFetch)
+          exists = res.status == 200
+          let body = null
+          if(exists){
+            if(res.headers.get("content-type") == "application/json"){
+              body = await res.json()
+              exists = body?.result === false || body?.success === false ? false : true
+            } else {
+              body = await res.text()
+              exists = body === "false" ? false : true;
+            }
           }
+          if(fs.detailsUrl){
+            details = typeof body === "object" && body.result ? body.result : body
+          } else {
+            details = body || null
+          }
+        } catch(err){
+          console.log(err)
         }
-        let details = null;
-        if(fs.detailsUrl){
-          details = typeof body === "object" && body.result ? body.result : body
-        } else {
-          details = body || null
-        }
-        resolve({id, fileSource: {id: fs._id, title: fs.title}, exists: exists, statusCode: res.status, statusText: res.statusText, details, url})
+        resolve({id, fileSource: {id: fs._id, title: fs.title}, exists: exists, statusCode: res?.status, statusText: res?.statusText, details, url})
       })
     }));
     return promiseResults
