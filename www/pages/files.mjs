@@ -42,7 +42,7 @@ template.innerHTML = `
   <action-bar>
       <action-bar-item id="new-btn" class="hidden">Upload file(s)</action-bar-item>
       <action-bar-item id="add-folder" class="hidden">Add folder</action-bar-item>
-      <action-bar-item id="download-folder" title="Only downloads files in current folder. It does not allow download of folders.">Download all files</action-bar-item>
+      <action-bar-item id="download-folder" title="Only downloads the files that are currently shown. It does not allow download of folders.">Download all files</action-bar-item>
       <action-bar-item id="delete-all-btn" class="hidden">Delete all</action-bar-item>
   </action-bar>
 
