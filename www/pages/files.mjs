@@ -256,7 +256,7 @@ class Element extends HTMLElement {
 
       tdName.innerHTML = `<field-edit type="text" value="${fileObj.filename}" patch="file/${id}" field="filename"></field-edit>`
       if(fileObj.type == "folder"){
-        tdFilter.innerHTML = `<field-edit type="text" value="${fileObj.filter}" patch="file/${id}" field="filter"></field-edit>`
+        tdFilter.innerHTML = `<field-edit type="text" value="${fileObj.filter||""}" patch="file/${id}" field="filter"></field-edit>`
       }
       tdTags.innerHTML = `<field-edit type="text" value="${fileObj.tags.join(", ")}" patch="file/${id}" field="tags"></field-edit>`
       img.src = "/img/cancel.svg"
