@@ -1,6 +1,7 @@
 const elementName = 'files-page'
 
-import {default as api, userPermissions} from "/system/api.mjs"
+import api from "/system/api.mjs"
+import {userPermissions} from "/system/user.mjs"
 import "/components/action-bar.mjs"
 import "/components/action-bar-item.mjs"
 import "/components/field-ref.mjs"

@@ -1,7 +1,8 @@
 const elementName = 'file-page'
 
 import {state} from "/system/core.mjs"
-import {default as api, userPermissions} from "/system/api.mjs"
+import api from "/system/api.mjs"
+import {userPermissions} from "/system/user.mjs"
 import "/components/field-edit.mjs"
 import "/components/field-ref.mjs"
 import "/components/field-list.mjs"
