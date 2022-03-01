@@ -7,10 +7,8 @@ import "/components/action-bar-item.mjs"
 import "/components/field-ref.mjs"
 import "/components/field.mjs"
 import "/components/field-edit.mjs"
-import "/components/acl.mjs"
-import "/components/action-bar-menu.mjs"
 import {on, off, fire} from "/system/events.mjs"
-import {state, apiURL, setPageTitle, goto} from "/system/core.mjs"
+import {state, pushStateQuery, apiURL} from "/system/core.mjs"
 import {showDialog} from "/components/dialog.mjs"
 import { alertDialog } from "../../components/dialog.mjs"
 import { confirmDialog } from "../../components/dialog.mjs"
@@ -35,7 +33,9 @@ template.innerHTML = `
 
     table thead th:nth-child(1){width: 25px}
     table thead th:nth-child(2){width: 450px}
-    table tbody td:last-child{white-space: nowrap;}
+    table thead th:nth-child(3){width: 70px}
+    table thead th:nth-child(4){width: 100px}
+    table thead th:nth-child(5){width: 150px}
 
     table th:nth-child(2), table td:nth-child(2){padding-left: 0px;}
   </style>  
@@ -43,23 +43,22 @@ template.innerHTML = `
   <action-bar>
       <action-bar-item id="new-btn" class="hidden">Upload file(s)</action-bar-item>
       <action-bar-item id="add-folder" class="hidden">Add folder</action-bar-item>
-
-      <action-bar-item id="options-menu" class="hidden">
-        <action-bar-menu label="Options">
-          <button id="download-folder" title="Only downloads the files that are currently shown. It does not allow download of folders.">Download all files</button>
-          <br>
-          <button id="delete-all-btn" class="hidden">Delete all</button>
-        </action-bar-menu>
-      </action-bar-item>
-
+      <action-bar-item id="download-folder" title="Only downloads the files that are currently shown. It does not allow download of folders.">Download all files</action-bar-item>
+      <action-bar-item id="delete-all-btn" class="hidden">Delete all</action-bar-item>
   </action-bar>
 
-  <div id="container">    
+  <div id="container">
+    <input id="search" type="text" placeholder="Enter query" value=""></input>
+    <searchhelp-component path="file/searchhelp"></searchhelp-component>
+    
     <table>
         <thead>
             <tr>
               <th></th>
               <th>Filename</th>
+              <th>Size</th>
+              <th>Mime / filter</th>
+              <th>Tags</th>
               <th></th>
             </tr>
         </thead>
@@ -75,6 +74,7 @@ template.innerHTML = `
   
   <dialog-component title="Add folder" id="add-folder-dialog">
     <field-component label="Name"><input id="add-name"></input></field-component>
+    <field-component label="Filter"><input id="add-filter"></input></field-component>
   </dialog-component>
 `;
 
@@ -89,6 +89,7 @@ class Element extends HTMLElement {
     this.uploadFile = this.uploadFile.bind(this);
     this.addFolder = this.addFolder.bind(this);
     this.downloadFolder = this.downloadFolder.bind(this);
+    this.queryChanged = this.queryChanged.bind(this);
     this.deleteAll = this.deleteAll.bind(this);
     this.tabClick = this.tabClick.bind(this)
     
@@ -98,39 +99,60 @@ class Element extends HTMLElement {
     this.shadowRoot.getElementById("delete-all-btn").addEventListener("click", this.deleteAll)
     this.shadowRoot.querySelector('table tbody').addEventListener("click", this.tabClick)
 
-    this.folderPath = state().path.substring(6)
-    if(!this.folderPath.startsWith("/")) this.folderPath = "/" + this.folderPath
-    this.folderPath = decodeURI(this.folderPath);
+    this.shadowRoot.getElementById('search').addEventListener("change", () => {
+      this.queryChanged()
+      pushStateQuery(this.lastQuery ? {filter: this.lastQuery} : undefined)
+    })
+
+    this.query = ""
 
     userPermissions().then(permissions => {
       if(permissions.includes("file.upload")){
         this.shadowRoot.getElementById("new-btn").classList.remove("hidden")
       }
       if(permissions.includes("file.edit")){
-        this.shadowRoot.getElementById("options-menu").classList.remove("hidden")
         this.shadowRoot.getElementById("add-folder").classList.remove("hidden")
         this.shadowRoot.getElementById("delete-all-btn").classList.remove("hidden")
       }
     })
   }
   async refreshData(){
-    this.folder = await api.get(`file/path${encodeURI(this.folderPath)}`)
-    if(!this.folder || this.folder.content.length < 1) return this.shadowRoot.querySelector('table tbody').innerHTML = ''
-    setPageTitle(!this.folder.parentPath ? "Files" : this.folder.name)
-    this.shadowRoot.querySelector('table tbody').innerHTML = this.folder.content.sort((a, b) => {
+    let result = await api.get(`file/query?filter=${this.lastQuery}`)
+    if(!result) return this.shadowRoot.querySelector('table tbody').innerHTML = ''
+    this.tags = result.tags;
+    this.files = result.results;
+    this.shadowRoot.querySelector('table tbody').innerHTML = result.sort((a, b) => {
       return a.type == b.type ? (a.name?.toLowerCase() < b.name?.toLowerCase() ? -1 : 1)
                               : a.type == "folder" ? -1 : 1
     }).map(f => `
-        <tr class="result ${f.type}" data-id="${f.id}" data-name="${f.name}">
+        <tr class="result" data-id="${f.id}" data-name="${f.name}">
           <td><img style="width: 20px;" src="/img/${f.type == "folder" ? "folder.svg" : "file.png"}"></td>
-          <td><field-ref ref="${f.type == "folder" ? `/files${(f.parentPath&&f.parentPath!="/") ? encodeURI(f.parentPath):""}/${encodeURI(f.name)}` : `/file/${f.id}`}">${f.name}</field-ref></td>
+          <td><field-ref ref="${f.type == "folder" ? `/files?filter=folder:${f.id}` : `/file/${f.id}`}">${f.name}</field-ref></td>
+          <td>${f.size?`${Math.floor(f.size/1000)} KB`:""}</td>
+          <td>${f.mime||f.filter||""}</td>
+          <td>${f.tags.join(", ")}</td>
           <td>
-            <img title="Show info" class="info iconbtn" src="/img/info.png">
             <img title="Edit" class="edit iconbtn" src="/img/edit.ico">
             <img title="Delete" class="delete iconbtn" src="/img/delete.png">
           </td>
         </tr>
       `).join("");
+
+    this.shadowRoot.getElementById("add-folder").toggleAttribute("disabled", !this.isFolderView)
+  }
+
+  async queryChanged(q = this.shadowRoot.querySelector('input').value){
+    if(q == this.lastQuery)
+      return;
+
+    q = q.toLowerCase() || "folder:"
+    this.isFolderView = /folder\:\d*/.test(q)
+    this.folder = this.isFolderView ? /folder\:(\d*)/.exec(q)[1]||"root" : null
+
+    this.lastQuery = q;
+    this.shadowRoot.querySelector('input').value = q;
+
+    this.refreshData();
   }
 
   async uploadFile(){
@@ -147,14 +169,15 @@ class Element extends HTMLElement {
     showDialog(dialog, {
       show: () => this.shadowRoot.getElementById("add-name").focus(),
       ok: async (val) => {
-        await api.post(`file/${this.folder.id}/folders`, val)
+        await api.post(`file/${this.folder}/folders`, val)
         this.refreshData()
       },
       validate: (val) => 
           !val.name ? "Please fill out name"
         : true,
       values: () => {return {
-        name: this.shadowRoot.getElementById("add-name").value
+        name: this.shadowRoot.getElementById("add-name").value,
+        filter: this.shadowRoot.getElementById("add-filter").value,
       }},
       close: () => {
         this.shadowRoot.querySelectorAll("field-component input").forEach(e => e.value = '')
@@ -200,13 +223,11 @@ class Element extends HTMLElement {
     let id = tr.getAttribute("data-id")
     let name = tr.getAttribute("data-name")
     if(e.target.classList.contains("delete")){
-      if(!await confirmDialog(`Are you sure that you want to delete ${tr.classList.contains("folder") ? "folder" : "file"} ${name} (${id})?`)) return;
+      if(!await confirmDialog(`Are you sure that you want to delete file ${name} (${id})?`)) return;
       await api.del(`file/${id}`)
       this.refreshData()
     } else if(e.target.classList.contains("edit")){
       this.editRowClicked(e.target, tr, id)
-    } else if(e.target.classList.contains("info")){
-      goto(`/file/${id}`)
     }
   }
 
@@ -214,13 +235,13 @@ class Element extends HTMLElement {
     let tdName = tr.querySelector("td:nth-child(2)")
     let tdFilter = tr.querySelector("td:nth-child(4)")
     let tdTags = tr.querySelector("td:nth-child(5)")
-    let fileObj = this.folder.content.find(t => t.id == id)
+    let fileObj = this.files.find(t => t.id == id)
 
     if(tr.hasAttribute("edit-mode")){
       tr.removeAttribute("edit-mode")
 
-      fileObj.name = tdName.querySelector("field-edit").getValue()
-      tdName.innerHTML = `<field-ref ref="${fileObj.type == "folder" ? `/files${(fileObj.parentPath&&fileObj.parentPath!="/") ? encodeURI(fileObj.parentPath):""}/${encodeURI(fileObj.name)}` : `/file/${fileObj.id}`}">${fileObj.name}</field-ref>`
+      fileObj.filename = tdName.querySelector("field-edit").getValue()
+      tdName.innerHTML = `<field-ref ref="${fileObj.type == "folder" ? `/files?filter=folder:${fileObj.id}` : `/file/${fileObj.id}`}">${fileObj.filename}</field-ref>`
 
       if(fileObj.type == "folder"){
         fileObj.filter = tdFilter.querySelector("field-edit").getValue()
@@ -234,7 +255,7 @@ class Element extends HTMLElement {
     } else {
       tr.setAttribute("edit-mode", "true")
 
-      tdName.innerHTML = `<field-edit type="text" value="${fileObj.name}" patch="file/${id}" field="name"></field-edit>`
+      tdName.innerHTML = `<field-edit type="text" value="${fileObj.filename}" patch="file/${id}" field="filename"></field-edit>`
       if(fileObj.type == "folder"){
         tdFilter.innerHTML = `<field-edit type="text" value="${fileObj.filter||""}" patch="file/${id}" field="filter"></field-edit>`
       }
@@ -244,11 +265,17 @@ class Element extends HTMLElement {
   }
 
   connectedCallback() {
+    this.shadowRoot.getElementById('search').focus();
+    this.queryChanged(state().query.filter||"");
+    on("changed-project", elementName, this.refreshData)
     on("changed-page", elementName, this.refreshData)
+    on("changed-page-query", elementName, (query) => this.queryChanged(query.filter || ""))
   }
 
   disconnectedCallback() {
+    off("changed-project", elementName)
     off("changed-page", elementName)
+    off("changed-page-query", elementName)
   }
 }
 

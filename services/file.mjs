@@ -4,27 +4,20 @@ import fileSourceService from "./filesource.mjs"
 import { getTimestamp } from "../../../tools/date.mjs"
 import fetch from "node-fetch"
 import File from "../models/file.mjs"
+import FileOrFolder from "../models/fileorfolder.mjs"
 
 export let tokens = [
   {keywords: ["id"], title: "Search for Id", resolve: token => `id:${token}`},
   {keywords: ["tag"], title: "Search for tag", resolve: (token, tag, service) => {
-    service.tags.add(token)
     return `tag:"user-${token}"`
   }},
-  {keywords: ["type"], title: "Search for type (folder or file)", resolve: token => token == "folder" ? "tag:folder" : "!tag:folder"},
+  {keywords: ["type"], title: "Search for type (folder or file)", resolve: token => token == "folder" ? "tag:folder" : "tag:file"},
   {keywords: ["ext"], title: "Search for extension", resolve: token => `prop:"name=.${token}^"`},
   {keywords: ["folder"], title: "Search for folder content", resolve: (token, tag, service) => {
     if (token == "root" || !token)
-      return "tag:folder !parent.tag:folder"
+      return "content..tag:folder content..tag:root"
 
-    let folder = Entity.find(`tag:folder (id:"${token}"|prop:"name=${token}")`)
-    if(folder && folder.filter){
-      let ast = service.parser.parse(folder.filter)
-      let q = service.parseE(ast);
-      return `(parent.id:${folder}|${q})`;
-    }
-
-    return `(parent.id:${token}|parent.prop:"name=${token}")`
+    return `content..prop:"name=${token}"|content..id:${token}`
   }},
   {keywords: [null], title: "Search for text", resolve: token => token == "*" ? "!id:-20" : `prop:name~${token}`},
 ]
@@ -41,21 +34,19 @@ class Service {
     if(!fileContent.size) throw "size is mandatory"
     if(!fileContent.blob) throw "blob is mandatory"
 
-    let file = new Entity().tag("file")
-          .prop("name", fileContent.filename)
-          .prop("size", fileContent.size)
-          .prop("hash", hash)
-          .prop("mime", fileContent.mime || null)
-          .prop("timestamp", getTimestamp())
-          .setBlob(fileContent.blob.stream())
-
-    for(let tag of tags.filter(t => t)) 
-      file.tag(`user-${tag}`);
+    return new File({
+      name: fileContent.filename || fileContent.name,
+      size: fileContent.size,
+      hash,
+      mime: fileContent.mime||null,
+      tags,
+      data: fileContent.blob.stream()
+    })
   }
 
   async fetchFile(hash){
     // First check local files
-    let file = File.lookup(hash)
+    let file = File.lookupHash(hash)
     if (file) {
       return {filename: file.name, mime: file.mime, size: file.size, blob: file.blob}
     }
@@ -101,8 +92,6 @@ class Service {
       this.parser = new SearchQueryParser()
     }
 
-    this.tags = new Set()
-
     let q;
     if (query) {
       let ast = this.parser.parse(query.trim())
@@ -110,14 +99,14 @@ class Service {
     }
 
     try {
-      let allResults = Entity.search(q ? `tag:file (${q})` : "tag:file")
+      let allResults = FileOrFolder.search(q ? `(tag:file|tag:folder) (${q})` : "(tag:file|tag:folder)")
       //first, last, start, end, after, before
       let res = allResults//.sort((a, b) => a.name <= b.name ? -1 : 1)
 
-      return {results: res, tags: [...this.tags]};
+      return {results: res};
     } catch (err) {
       console.log(err)
-      return { results: [], tags: [], error: err};
+      return { results: [], error: err};
     }
   }
 }

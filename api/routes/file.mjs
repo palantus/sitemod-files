@@ -2,14 +2,15 @@ import express from "express"
 const { Router, Request, Response } = express;
 const route = Router();
 import Entity, { sanitize } from "entitystorage"
-import service from "../../services/filesource.mjs"
-import fetch from 'node-fetch'
 import { getTimestamp } from "../../../../tools/date.mjs"
 import {default as fileService, tokens} from "../../services/file.mjs"
 import Archiver from 'archiver';
 import moment from "moment"
 import {service as userService} from "../../../../services/user.mjs"
 import {validateAccess} from "../../../../services/auth.mjs"
+import File from "../../models/file.mjs";
+import Folder from "../../models/folder.mjs";
+import FileOrFolder from "../../models/fileorfolder.mjs";
 
 export default (app) => {
 
@@ -20,92 +21,78 @@ export default (app) => {
     res.json(tokens)
   })
 
-  route.get(['/download/:id', '/download/:id/:filename'], async function (req, res, next) {
-    if(!validateAccess(req, res, {permission: "file.read"})) return;
-
-    try {
-      // First check local files
-      let id = sanitize(req.params.id)
-      let file = Entity.find(`(id:${id}|prop:"hash=${id}") tag:file !tag:folder`)
-      if (file) {
-        res.setHeader('Content-disposition', `attachment; filename=${file.name}`);
-        res.setHeader('Content-Type', file.mime);
-        res.setHeader('Content-Length', file.size);
-        file.blob.pipe(res)
-        return;
-      }
-
-      // Then check all file sources
-      file = await service.findFile(id)
-      if (!file) {
-        res.sendStatus(404);
-        return;
-      }
-      let filename = file.details?.result?.filename || file.details?.filename || null
-      let src = Entity.find(`tag:filesource id:${file.fileSource.id}`)
-      let downloadUrl = src.downloadUrl.replace("$hash$", file.id);
-      let url = service.applyApiKeyParm(downloadUrl, Entity.find(`tag:filesource id:${src._id}`).apiKeyParm)
-
-      let r = await fetch(url, { headers: { 'Origin': req.header("Origin") } })
-      res.writeHead(200, {
-        "Content-Disposition": r.headers.get("Content-Disposition"),
-        'Content-Type': r.headers.get("Content-Type"),
-        'Content-Length': r.headers.get("Content-Length")
-      })
-      r.body.pipe(res)
-      
-    } catch(err){
-      console.log(err)
-      res.status(501).json({success: false, error: "Server failure"})
-    }
-  });
-
   route.get("/tag/:tag", function (req, res, next) {
     if(!validateAccess(req, res, {permission: "file.read"})) return;
-    let items = Entity.search(`tag:file tag:"user-${sanitize(req.params.tag)}"`)
-    res.json(items.map(i => ({
-      id: i._id,
-      type: i.tags.includes("folder") ? "folder" : "file",
-      filename: i.name,
-      size: i.size || null,
-      hash: i.hash || null,
-      mime: i.mime || null,
-      tags: i.tags.filter(t => t.startsWith("user-")).map(t => t.substr(5))
-    })))
+    let results = FileOrFolder.allByTag(sanitize(req.params.tag))
+                              .filter(f => f.hasAccess(res.locals.user, 'r'))
+                              .map(c => c.toObj(res.locals.user))
+    res.json(results)
+  })
+
+  route.get("/path", function (req, res, next) {
+    if(!validateAccess(req, res, {permission: "file.read"})) return;
+    res.json(Folder.root().toObj(res.locals.user))
+  })
+
+  route.get("/path/*", function (req, res, next) {
+    if(!validateAccess(req, res, {permission: "file.read"})) return;
+    let path = decodeURI(req.path.substring(5))
+    let folder = path.substring(1).split("/").reduce((parent, name) => {
+      return parent?.getChildFolderNamed(name, res.locals.user) || null
+    }, Folder.root())
+
+    res.json(folder?.toObj(res.locals.user) || null)
   })
 
   route.get("/query", function (req, res, next) {
     if(!validateAccess(req, res, {permission: "file.read"})) return;
-    let result = fileService.search(req.query.filter)
-    res.json({
-      tags: result.tags,
-      results: result.results.map(i => ({
-        id: i._id,
-        type: i.tags.includes("folder") ? "folder" : "file",
-        filename: i.name,
-        size: i.size || null,
-        hash: i.hash || null,
-        mime: i.mime || null,
-        tags: i.tags.filter(t => t.startsWith("user-")).map(t => t.substr(5)),
-        filter: i.filter
-      }))})
+    res.json(fileService.search(req.query.filter).results.map(r => r.toObj(res.locals.user)))
   })
 
-  route.post("/tag/:tag/upload", function (req, res, next) {
+  route.post("/tag/:tag/upload", (req, res, next) => {
     if(!validateAccess(req, res, {permission: "file.upload"})) return;
     let files = []
     for (let filedef in req.files) {
       let fileObj = Array.isArray(req.files[filedef]) ? req.files[filedef] : [req.files[filedef]]
       for (let f of fileObj) {
-        let file = new Entity().tag("file")
-          .prop("name", f.name)
-          .prop("size", f.size)
-          .prop("hash", f.md5)
-          .prop("mime", f.mimetype)
-          .prop("timestamp", getTimestamp())
-          .tag(`user-${req.params.tag}`)
-          .setBlob(f.data)
+        let file = new File({...f, tag: req.params.tag, owner: res.locals.user})
+        files.push({id: file._id, hash: file.hash})
+      }
+    }
+    res.json(files)
+  })
 
+  route.post(["/drop", "/drop/shared"], (req, res, next) => {
+    if(!validateAccess(req, res, {permission: "file.upload"})) return;
+    let expirationDate = new Date()
+    expirationDate.setDate(expirationDate.getDate() + 30)
+    let files = []
+    for (let filedef in req.files) {
+      let fileObj = Array.isArray(req.files[filedef]) ? req.files[filedef] : [req.files[filedef]]
+      for (let f of fileObj) {
+        let file = new File({...f, tag: "drop", expire: expirationDate.toISOString(), owner: res.locals.user})
+        file.acl = req.path.endsWith("/shared") ? "r:shared;w:shared" : "r:private;w:private"
+        files.push({id: file._id, hash: file.hash})
+      }
+    }
+    res.json(files)
+  })
+
+  route.delete("/drop/all", (req, res, next) => {
+    if(!validateAccess(req, res, {permission: "file.edit"})) return;
+    FileOrFolder.allByTag("drop").forEach(f => f.delete())
+    res.json({success: true})
+  })
+
+  route.post("/folder/:id/upload", (req, res, next) => {
+    if(!validateAccess(req, res, {permission: "file.upload"})) return;
+    let folder = Folder.lookup(sanitize(req.params.id))
+    if(!folder) throw "Unknown folder"
+    let files = []
+    for (let filedef in req.files) {
+      let fileObj = Array.isArray(req.files[filedef]) ? req.files[filedef] : [req.files[filedef]]
+      for (let f of fileObj) {
+        let file = new File({...f, tag: req.params.tag, owner: res.locals.user, folder})
         files.push({id: file._id, hash: file.hash})
       }
     }
@@ -116,43 +103,25 @@ export default (app) => {
     if(!validateAccess(req, res, {permission: "file.upload"})) return;
     if(!req.query.tags) throw "Tags in the query are mandatory"
     if(!req.query.hash) throw "Must provide hash in query";
-    
-    let f = {name: req.query.name||"file", size: parseInt(req.header("Content-Length")), md5: req.query.hash, mimetype: req.query.mime || "application/x-binary", data: req}
-
-    let file = new Entity().tag("file")
-      .prop("name", f.name)
-      .prop("size", f.size)
-      .prop("hash", f.md5)
-      .prop("mime", f.mimetype)
-      .prop("timestamp", getTimestamp())
-      .tag(req.query.tags.split(",").map(t => `user-${t}`))
-      .setBlob(f.data)
-
-      res.json({
-        id: file._id, 
-        hash: file.hash,
-        filename: f.name
-      })
+    let f = {name: req.query.name||"file", size: parseInt(req.header("Content-Length")), hash: req.query.hash, mimetype: req.query.mime || "application/x-binary", data: req}
+    let file = new File({...f, tags: req.query.tags?.split(",").map(t => t.trim()||[]), owner: res.locals.user})
+    res.json({id: file._id, hash: file.hash, name: f.name})
   })
 
   route.post("/:id/folders", function (req, res, next) {
     if(!validateAccess(req, res, {permission: "file.edit"})) return;
     if (!req.body.name) throw "name is mandatory"
-    let parent = req.params.id != "root" ? Entity.find(`id:"${sanitize(req.params.id)}" tag:file`) : null
-    let child = new Entity().tag("file")
-      .tag("folder")
-      .prop("name", req.body.name)
-      .prop("filter", req.body.filter || null)
-      .rel(parent, "parent");
-    if (parent) {
-      parent.rel(child, "child")
-    }
-    res.json(true)
+    if(!req.params.id || isNaN(req.params.id)) throw "Parent folder is mandatory"
+    let parent = Folder.lookup(sanitize(req.params.id))
+    if(!parent) throw "Parent doesn't exist";
+    if(parent.getChildFolderNamed(req.body.name)) throw "A file or folder with that name already exists"
+    let child = new Folder(req.body.name, res.locals.user, parent)
+    res.json(child.toObj(res.locals.user))
   })
 
-  route.get(['/dl/:id', '/dl/:id/:filename'], function (req, res, next) {
+  route.get(['/dl/:id', '/dl/:id/:filename', '/download/:id', '/download/:id/:filename'], function (req, res, next) {
     if(!validateAccess(req, res, {permission: "file.read"})) return;
-    let file = Entity.find(`(id:"${sanitize(req.params.id)}"|prop:"hash=${sanitize(req.params.id)}") tag:file !tag:folder`)
+    let file = File.lookupAccessible(sanitize(req.params.id), res.locals.user)
     if (!file) throw "Unknown file";
 
     res.setHeader('Content-disposition', `attachment; filename=${file.name}`);
@@ -164,7 +133,7 @@ export default (app) => {
 
   route.get(['/raw/:id', '/raw/:id/:filename'], function (req, res, next) {
     if(!validateAccess(req, res, {permission: "file.read"})) return;
-    let file = Entity.find(`id:"${sanitize(req.params.id)}" tag:file !tag:folder`)
+    let file = File.lookupAccessible(sanitize(req.params.id), res.locals.user)
     if (!file) throw "Unknown file";
 
     res.setHeader('Content-disposition', `inline; filename=${file.name}`);
@@ -178,18 +147,14 @@ export default (app) => {
     if(!validateAccess(req, res, {permission: "file.read"})) return;
     let files = fileService.search(req.query.filter).results.filter(f => !f.tags.includes("folder"))
     if (files.length < 1) throw "No files in filter";
-
     let zip = Archiver('zip');
-
     for (let file of files) {
       zip.append(file.blob, { name: file.name })
     }
-
     res.writeHead(200, {
       'Content-Type': 'application/zip',
       'Content-disposition': `attachment; filename=files_${moment().format("YYYY-MM-DD HH:mm:ss")}.zip`
     });
-
     zip.pipe(res)
     zip.finalize()
   });
@@ -207,12 +172,11 @@ export default (app) => {
 
   route.patch('/:id', function (req, res, next) {
     if(!validateAccess(req, res, {permission: "file.edit"})) return;
-    let file = Entity.find(`(id:"${sanitize(req.params.id)}"|prop:"hash=${sanitize(req.params.id)}") tag:file`)
-    if(!file) throw "Unknown file"
+    let file = FileOrFolder.lookup(sanitize(req.params.id))
+    if(!file) throw "Unknown file or folder"
 
     if(req.body.name !== undefined && req.body.name) file.name = req.body.name
     if(req.body.filename !== undefined && req.body.filename) file.name = req.body.filename
-    if(req.body.filter !== undefined) file.filter = req.body.filter || ""
 
     let tagList = !req.body.tags ? null : Array.isArray(req.body.tags) ? req.body.tags : typeof req.body.tags === "string" ? req.body.tags.split(",").map(t => t.trim()) : null;
     if(tagList){
@@ -226,18 +190,19 @@ export default (app) => {
 
   route.post('/:id/tags', function (req, res, next) {
     if(!validateAccess(req, res, {permission: "file.edit"})) return;
-    let file = Entity.find(`(id:"${sanitize(req.params.id)}"|prop:"hash=${sanitize(req.params.id)}") tag:file !tag:folder`)
+    let file = FileOrFolder.lookup(sanitize(req.params.id))
     if(!file) throw "Unknown file"
-    if(!req.body.tag) throw "No tag provided"
-
-    file.tag(`user-${req.body.tag}`)
-
+    let tags = req.body.tag ? [req.body.tag] : (req.body.tags && Array.isArray(req.body.tags)) ? req.body.tags : []
+    for(let tag of tags){
+      if(typeof tag !== "string") continue;
+      file.tag(`user-${tag}`)
+    }
     res.json(true)
   })
 
   route.delete('/:id/tags/:tag', function (req, res, next) {
     if(!validateAccess(req, res, {permission: "file.edit"})) return;
-    let file = Entity.find(`(id:"${sanitize(req.params.id)}"|prop:"hash=${sanitize(req.params.id)}") tag:file !tag:folder`)
+    let file = FileOrFolder.lookup(sanitize(req.params.id))
     if(!file) throw "Unknown file"
     if(!req.params.tag) throw "No tag provided"
 
@@ -248,7 +213,7 @@ export default (app) => {
 
   route.delete('/:id', function (req, res, next) {
     if(!validateAccess(req, res, {permission: "file.edit"})) return;
-    let file = Entity.find(`(id:"${sanitize(req.params.id)}"|prop:"hash=${sanitize(req.params.id)}") tag:file`)
+    let file = FileOrFolder.lookup(sanitize(req.params.id))
     if(!file) throw "Unknown file"
     file.delete();
 
@@ -257,60 +222,8 @@ export default (app) => {
 
   route.get('/:id', async function (req, res, next) {
     if(!validateAccess(req, res, {permission: "file.read"})) return;
-    let file = Entity.find(`(id:"${sanitize(req.params.id)}"|prop:"hash=${sanitize(req.params.id)}") tag:file`)
-    if (file) {
-      res.json({
-        id: file._id,
-        type: file.tags.includes("folder") ? "folder" : "file",
-        filename: file.name,
-        size: file.size || null,
-        hash: file.hash || null,
-        mime: file.mime || null,
-        tags: file.tags.filter(t => t.startsWith("user-")).map(t => t.substr(5)),
-        links: {
-          download: `${global.sitecore.apiURL}/file/download/${file._id}${file.name ? `/${encodeURI(file.name)}` : ''}?token=${userService.getTempAuthToken(res.locals.user)}`,
-          raw: `${global.sitecore.apiURL}/file/raw/${file._id}${file.name ? `/${encodeURI(file.name)}` : ''}?token=${userService.getTempAuthToken(res.locals.user)}`,
-        }
-      });
-      return;
-    }
-
-    try{
-      file = await service.findFile(sanitize(req.params.id))
-    } catch(err){
-      console.log(err)
-    }
-    
-    if (!file) {
-      res.sendStatus(404);
-      return;
-    }
-
-    let src = Entity.find(`tag:filesource id:${file.fileSource.id}`)
-    let filename = file.details?.result?.filename || file.details?.filename || null
-    res.json({
-      id: file.id,
-      hash: req.params.id,
-      filename: filename || "Unknown_filename",
-      size: file.details?.result?.size || file.details?.size || null,
-      links: {
-        download: `${global.sitecore.apiURL}/file/download/${file.id}${filename ? `/${encodeURI(filename)}` : ''}?token=${userService.getTempAuthToken(res.locals.user)}`,
-        raw: `${global.sitecore.apiURL}/file/raw/${file.id}${filename ? `/${encodeURI(filename)}` : ''}?token=${userService.getTempAuthToken(res.locals.user)}`,
-      },
-      fileSource: {
-        id: src._id,
-        title: src.title
-      }
-    })
-  });
-
-  route.get('/check/:id', async function (req, res, next) {
-    if(!validateAccess(req, res, {permission: "file.source.manage"})) return;
-    try{
-      res.json(await service.findFileAll(sanitize(req.params.id)))
-    } catch(err){
-      console.log(err)
-      res.status(501).json({success: false, error: "Server failure"})
-    }
-  });
+    let file = FileOrFolder.lookupAccessible(sanitize(req.params.id), res.locals.user)
+    if (!file) return res.sendStatus(404);
+    res.json(file.toObj(res.locals.user));
+  })
 };

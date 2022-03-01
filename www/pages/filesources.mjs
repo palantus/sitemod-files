@@ -81,17 +81,17 @@ class Element extends HTMLElement {
     this.shadowRoot.getElementById("download-btn").addEventListener("click", async () => {
       let hash = await promptDialog("Enter hash")
       if(!hash) return;
-      window.open(`${apiURL()}/file/download/${hash}`)
+      window.open(`${apiURL()}/filesource/download/${hash}`)
     })
     this.shadowRoot.getElementById("find-btn").addEventListener("click", async () => {
       let hash = await promptDialog("Enter hash")
       if(!hash) return;
-      window.open(`${apiURL()}/file/${hash}`)
+      window.open(`${apiURL()}/filesource/file/${hash}`)
     })
     this.shadowRoot.getElementById("debug-btn").addEventListener("click", async () => {
       let hash = await promptDialog("Enter hash")
       if(!hash) return;
-      window.open(`${apiURL()}/file/check/${hash}`)
+      window.open(`${apiURL()}/filesource/check/${hash}`)
     })
 
     this.refreshData();
