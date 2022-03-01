@@ -167,7 +167,7 @@ class Element extends HTMLElement {
   async downloadFolder(){
     if(typeof window.showSaveFilePicker === "undefined") {
       let {token} = await api.get("me/token")
-      window.open(`${apiURL()}/file/query/dl?filter=${this.lastQuery}&token=${token}`)
+      window.open(`${apiURL()}/file/query/dl?filter=folder:${this.folder.id}&token=${token}`)
       return;
     }
     
