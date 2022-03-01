@@ -1,5 +1,6 @@
 import Role from "../../models/role.mjs"
 import DataType from "../../models/datatype.mjs"
+import Folder from "./models/folder.mjs"
 
 export default async () => {
   // init
@@ -9,6 +10,8 @@ export default async () => {
   let folderType = DataType.lookupOrCreate("folder", {title: "Folder", permission: "file.read", api: "file", nameField: "name", uiPath: "file", query: "tag:folder", acl: "r:inherit;w:inherit", aclInheritance: true})
   DataType.lookupOrCreate("file", {title: "File", permission: "file.read", api: "file", nameField: "name", uiPath: "file", query: "tag:file", acl: "r:inherit;w:inherit", aclInheritance: true, aclInheritFrom: folderType})
   
+  Folder.sharedRoot()
+
   return {
   }
 }
