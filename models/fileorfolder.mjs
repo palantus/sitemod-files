@@ -18,10 +18,22 @@ export default class FileOrFolder extends Entity {
     }
     return null;
   }
+  
+  hasAccess(user, right = 'r'){
+    return this.toType().hasAccess(user, right)
+  }
+
+  validateAccess(res, right, respondIfFalse = true){
+    return this.toType().validateAccess(res, right, respondIfFalse)
+  }
 
   static allByTag(tag) {
     if(!tag) return [];
     return FileOrFolder.search(`tag:"user-${tag}" (tag:file|tag:folder)`)
+  }
+
+  delete(){
+    this.toType().delete()
   }
 
   toType(){

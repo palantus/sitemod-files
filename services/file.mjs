@@ -15,9 +15,9 @@ export let tokens = [
   {keywords: ["ext"], title: "Search for extension", resolve: token => `prop:"name=.${token}^"`},
   {keywords: ["folder"], title: "Search for folder content", resolve: (token, tag, service) => {
     if (token == "root" || !token)
-      return "content..tag:folder content..tag:root"
+      return "parent.tag:folder parent.tag:root"
 
-    return `content..prop:"name=${token}"|content..id:${token}`
+    return `parent.prop:"name=${token}"|parent.id:${token}`
   }},
   {keywords: [null], title: "Search for text", resolve: token => token == "*" ? "!id:-20" : `prop:name~${token}`},
 ]
@@ -101,7 +101,7 @@ class Service {
     try {
       let allResults = FileOrFolder.search(q ? `(tag:file|tag:folder) (${q})` : "(tag:file|tag:folder)")
       //first, last, start, end, after, before
-      let res = allResults//.sort((a, b) => a.name <= b.name ? -1 : 1)
+      let res = allResults.map(f => f.toType())//.sort((a, b) => a.name <= b.name ? -1 : 1)
 
       return {results: res};
     } catch (err) {

@@ -2,6 +2,7 @@ import Entity from "entitystorage"
 import FileOrFolder from "./fileorfolder.mjs";
 import ACL from "../../../models/acl.mjs"
 import DataType from "../../../models/datatype.mjs";
+import User from "../../../models/user.mjs";
 
 class Folder extends Entity {
   initNew(name, owner, parentFolder){
@@ -31,21 +32,21 @@ class Folder extends Entity {
   }
 
   getChildFolderNamed(name, userForValidation){
-    return Folder.search(`prop:"name=${name}" tag:folder parent.id:${this}`).filter(f => !userForValidation || f.hasAccess(user, 'r'))[0]||null
+    return this.content.filter(f => f.name == name && f.tags.includes("folder") && (!userForValidation || f.hasAccess(userForValidation, 'r')))[0]||null
+  }
+
+  hasChildNamed(name){
+    return !!this.content.find(f => f.name == name)
+  }
+
+  get path(){
+    let parent = Folder.from(this.related.parent)
+    return parent ? `${parent?.path||""}/${this.name}` : ""
   }
 
   get parentPath(){
-    let parent = this.related.parent
-    if(!parent) return null
-    let foundIds = new Set()
-    let revPath = []
-    while(parent){
-      foundIds.add(parent._id)
-      revPath.push(parent.tags.includes("root") ? "" : parent.name)
-      parent = this.related.parent
-      if(parent && foundIds.has(parent._id)) break;
-    }
-    return revPath.length < 2 ? "/" : revPath.reverse().join("/")
+    let parent = Folder.from(this.related.parent)
+    return parent ? parent?.path || "/" : null
   }
 
   hasAccess(user, right = 'r'){
@@ -73,8 +74,31 @@ class Folder extends Entity {
     }
   }
 
+  delete(){
+    if(this.tags.includes("root") || this.tags.includes("sharedroot") || this.tags.includes("userroot")) return;
+    this.content.forEach(c => c.delete())
+    super.delete()
+  }
+
   static root(){
-    return Folder.find("tag:folder tag:root") || new Entity().tag("folder").tag("root").prop("name", "root").prop("acl", "r:public;w:public")
+    return Folder.find("tag:root tag:folder") 
+      || new Folder("", User.lookupAdmin())
+            .tag("root")
+            .prop("acl", "r:public;w:public")
+  }
+
+  static userRoot(user){
+    return Folder.find(`tag:userroot tag:folder owner.id:${user}`) 
+      || new Folder(user.id, user, Folder.root())
+            .tag("userroot")
+            .prop("acl", "r:private;w:private")
+  }
+
+  static sharedRoot(){
+    return Folder.find("tag:sharedroot tag:folder") 
+      || new Folder("shared", User.lookupAdmin(), Folder.root())
+            .tag("sharedroot")
+            .prop("acl", "r:shared;w:shared")
   }
 }
 

@@ -98,7 +98,7 @@ class Element extends HTMLElement {
     let file = this.file = await api.get(`file/${this.fileId}`)
     
     if(!file){
-      alertDialog("The file could not be found or you do not have access to it")
+      alertDialog("This file or folder could not be found. Either it doesn't exist or you do not have access to it")
       return;
     }
 

@@ -1,7 +1,7 @@
 const elementName = 'files-page'
 
 import api from "/system/api.mjs"
-import {userPermissions} from "/system/user.mjs"
+import {userPermissions, user} from "/system/user.mjs"
 import "/components/action-bar.mjs"
 import "/components/action-bar-item.mjs"
 import "/components/field-ref.mjs"
@@ -101,6 +101,8 @@ class Element extends HTMLElement {
     this.folderPath = state().path.substring(6)
     if(!this.folderPath.startsWith("/")) this.folderPath = "/" + this.folderPath
     this.folderPath = decodeURI(this.folderPath);
+    if(this.folderPath == "/mine")
+      this.folderPath = `/${user?.id}`
 
     userPermissions().then(permissions => {
       if(permissions.includes("file.upload")){
@@ -135,7 +137,7 @@ class Element extends HTMLElement {
 
   async uploadFile(){
     let dialog = this.shadowRoot.querySelector("#new-dialog")
-    uploadNewFile(dialog, {tags: this.tags || [], callback: this.refreshData})
+    uploadNewFile(dialog, {folder: this.folder, tags: [], callback: this.refreshData})
   }
 
   addFolder(){
@@ -190,7 +192,7 @@ class Element extends HTMLElement {
 
   async deleteAll(){
     if(!await confirmDialog(`Are you sure that you want to delete ALL files currently listed (filter "${this.lastQuery}")?`)) return;
-    await api.del(`file/query?filter=${this.lastQuery}`)
+    await api.del(`file/query?filter=folder:${this.folder.id}`)
     this.refreshData()
   }
 
@@ -200,7 +202,7 @@ class Element extends HTMLElement {
     let id = tr.getAttribute("data-id")
     let name = tr.getAttribute("data-name")
     if(e.target.classList.contains("delete")){
-      if(!await confirmDialog(`Are you sure that you want to delete ${tr.classList.contains("folder") ? "folder" : "file"} ${name} (${id})?`)) return;
+      if(!await confirmDialog(`Are you sure that you want to delete ${tr.classList.contains("folder") ? "folder" : "file"} ${name}?`)) return;
       await api.del(`file/${id}`)
       this.refreshData()
     } else if(e.target.classList.contains("edit")){
@@ -252,7 +254,7 @@ class Element extends HTMLElement {
   }
 }
 
-export async function uploadNewFile(dialog, {tags = [], callback} = {}){
+export async function uploadNewFile(dialog, {tags = [], folder = null, callback} = {}){
   showDialog(dialog, {
     show: () => {
       dialog.querySelector("#new-tag").focus();
@@ -263,7 +265,12 @@ export async function uploadNewFile(dialog, {tags = [], callback} = {}){
       for(let file of dialog.querySelector("input[type=file]").files)
         formData.append("file", file);
       let tags = val.tag.split(",").map(t => t.trim())
-      let files = await api.upload(`/file/tag/${tags[0]}/upload`, formData);
+      let files;
+      if(folder){
+        await api.upload(`/file/folder/${folder.id}/upload?tags=${encodeURI(tags.join(","))}`, formData);
+      } else {
+        await api.upload(`/file/tag/${tags[0]}/upload`, formData);
+      }
       if(tags.length > 1){
         for(let f of files){
           await api.patch(`file/${f.id}`, {tags})
@@ -273,7 +280,7 @@ export async function uploadNewFile(dialog, {tags = [], callback} = {}){
         callback(val);
     },
     validate: (val) => 
-        !val.tag ? "Please fill out tag"
+        !val.tag && !folder ? "Please fill out tag"
       : true,
     values: () => {return {
       tag: dialog.querySelector("#new-tag").value,

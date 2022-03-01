@@ -21,7 +21,7 @@ export default class File extends Entity {
     if(tags && Array.isArray(tags))
       tags.forEach(t => this.tag(`user-${t}`))
     if(data)
-      this.setBlob(data)  
+      this.setBlob(data)
 
     this.rel(folder, "parent")
 
@@ -44,7 +44,8 @@ export default class File extends Entity {
     if(file && file.hasAccess(user, 'r')) return file;
     if(isNaN(idOrHash)){
       for(let file of File.search(`prop:"hash=${idOrHash}" tag:file !tag:folder`)){
-        if(file.hasAccess(user, 'r')) return file;
+        if(file.hasAccess(user, 'r')) 
+          return file;
       }
     }
     return null;
