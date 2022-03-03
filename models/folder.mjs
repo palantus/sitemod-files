@@ -10,7 +10,7 @@ class Folder extends Entity {
     this.name = name;
     this.rel(parentFolder, "parent")
 
-    ACL.setDefaultACLOnEntity(this, owner, DataType.lookup("folder"))
+    ACL.setDefaultACLOnEntity(this, owner.id == "guest" && parentFolder ? parentFolder.related.owner : owner, DataType.lookup("folder"))
   }
   
   static lookup(id) {
@@ -31,8 +31,8 @@ class Folder extends Entity {
     return this.relsrev.parent?.map(c => FileOrFolder.from(c).toType()) || []
   }
 
-  getChildFolderNamed(name, userForValidation){
-    return this.content.filter(f => f.name == name && f.tags.includes("folder") && (!userForValidation || f.hasAccess(userForValidation, 'r')))[0]||null
+  getChildFolderNamed(name){
+    return this.content.filter(f => f.name == name && f.tags.includes("folder"))[0]||null
   }
 
   hasChildNamed(name){
@@ -57,9 +57,9 @@ class Folder extends Entity {
     return new ACL(this, DataType.lookup("folder")).validateAccess(res, right, respondIfFalse)
   }
 
-  rights(user){
+  rights(user, shareKey){
     let acl = new ACL(this, DataType.lookup("folder"))
-    return "" + (acl.hasAccess(user, "r")?'r':'') + (acl.hasAccess(user, "w")?'w':'')
+    return "" + (acl.hasAccess(user, "r", shareKey)?'r':'') + (acl.hasAccess(user, "w", shareKey)?'w':'')
   }
 
   toObj(user, shareKey, includeContent = true){
@@ -68,7 +68,7 @@ class Folder extends Entity {
       type: "folder",
       name: this.name,
       tags: this.tags.filter(t => t.startsWith("user-")).map(t => t.substr(5)),
-      rights: this.rights(user),
+      rights: this.rights(user, shareKey),
       parentPath: this.parentPath,
       content: includeContent ? this.content.filter(c => c.hasAccess(user, 'r', shareKey)).map(c => c.toObj(user, shareKey, false)) : undefined
     }
@@ -84,7 +84,7 @@ class Folder extends Entity {
     return Folder.find("tag:root tag:folder") 
       || new Folder("", User.lookupAdmin())
             .tag("root")
-            .prop("acl", "r:public;w:public")
+            .prop("acl", "r:shared;w:private")
   }
 
   static userRoot(user){

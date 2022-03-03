@@ -25,7 +25,7 @@ export default class File extends Entity {
 
     this.rel(folder, "parent")
 
-    ACL.setDefaultACLOnEntity(this, owner, DataType.lookup("file"))
+    ACL.setDefaultACLOnEntity(this, owner.id == "guest" && folder ? folder.related.owner : owner, DataType.lookup("file"))
   }
 
   static lookup(id) {
@@ -76,9 +76,9 @@ export default class File extends Entity {
     return new ACL(this, DataType.lookup("file")).validateAccess(res, right, respondIfFalse)
   }
 
-  rights(user){
+  rights(user, shareKey){
     let acl = new ACL(this, DataType.lookup("file"))
-    return "" + (acl.hasAccess(user, "r")?'r':'') + (acl.hasAccess(user, "w")?'w':'')
+    return "" + (acl.hasAccess(user, "r", shareKey)?'r':'') + (acl.hasAccess(user, "w", shareKey)?'w':'')
   }
 
   toObj(user, shareKey){
@@ -91,7 +91,7 @@ export default class File extends Entity {
       mime: this.mime || null,
       tags: this.tags.filter(t => t.startsWith("user-")).map(t => t.substr(5)),
       parentPath: this.parentPath,
-      rights: this.rights(user),
+      rights: this.rights(user, shareKey),
       expirationDate: this.expire || null,
       links: {
         download: `${global.sitecore.apiURL}/file/dl/${this._id}${this.name ? `/${encodeURI(this.name)}` : ''}?${shareKey ? `shareKey=${shareKey}` : `token=${userService.getTempAuthToken(user)}`}`,

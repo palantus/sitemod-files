@@ -39,8 +39,9 @@ export default (app) => {
     let path = decodeURI(req.path.substring(5))
     Folder.userRoot(res.locals.user) //Will create user root if missing
     let folder = path.substring(1).split("/").reduce((parent, name) => {
-      return parent?.getChildFolderNamed(name, res.locals.user) || null
+      return parent?.getChildFolderNamed(name) || null
     }, Folder.root())
+    if(folder && !folder.validateAccess(res, 'r')) return;
     res.json(folder?.toObj(res.locals.user, res.locals.shareKey) || null)
   })
 

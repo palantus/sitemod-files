@@ -42,7 +42,7 @@ template.innerHTML = `
     h1{margin-top: 5px; margin-left: 5px; margin-bottom: 0px;}
   </style>  
 
-  <action-bar>
+  <action-bar class="hidden">
       <action-bar-item id="new-btn" class="hidden">Upload file(s)</action-bar-item>
       <action-bar-item id="add-folder" class="hidden">Add folder</action-bar-item>
 
@@ -106,18 +106,6 @@ class Element extends HTMLElement {
       if(this.folderPath == "/mine")
         this.folderPath = `/${user?.id}`
     }
-
-    userPermissions().then(permissions => {
-      if(permissions.includes("file.upload")){
-        this.shadowRoot.getElementById("new-btn").classList.remove("hidden")
-      }
-      if(permissions.includes("file.edit")){
-        this.shadowRoot.getElementById("options-menu").classList.remove("hidden")
-        this.shadowRoot.getElementById("add-folder").classList.remove("hidden")
-        this.shadowRoot.getElementById("delete-all-btn").classList.remove("hidden")
-      }
-      this.shadowRoot.querySelector("action-bar").classList.toggle("hidden", !!!this.shadowRoot.querySelector("action-bar action-bar-item:not(.hidden)"))
-    })
   }
   async refreshData(){
     this.folder = this.folderId ? await api.get(`file/${encodeURI(this.folderId)}`)
@@ -137,11 +125,25 @@ class Element extends HTMLElement {
           <td><field-ref ref="${f.type == "folder" ? (this.folderId ? `/folder/${f.id}` : `/files${(f.parentPath&&f.parentPath!="/") ? encodeURI(f.parentPath):""}/${encodeURI(f.name)}`) : `/file/${f.id}`}">${f.name}</field-ref></td>
           <td>
             <img title="Show info" class="info iconbtn" src="/img/info.png">
-            <img title="Edit" class="edit iconbtn" src="/img/edit.ico">
-            <img title="Delete" class="delete iconbtn" src="/img/delete.png">
+            ${this.folder.rights.includes("w") ? `
+              <img title="Edit" class="edit iconbtn${this.folder.rights.includes("w")?'':' hidden'}" src="/img/edit.ico">
+              <img title="Delete" class="delete iconbtn" src="/img/delete.png">
+            `:''}
           </td>
         </tr>
       `).join("");
+
+    let permissions = await userPermissions()
+
+    if(permissions.includes("file.upload") && this.folder.rights.includes("w")){
+      this.shadowRoot.getElementById("new-btn").classList.remove("hidden")
+    }
+    if(permissions.includes("file.edit") && this.folder.rights.includes("w")){
+      this.shadowRoot.getElementById("options-menu").classList.remove("hidden")
+      this.shadowRoot.getElementById("add-folder").classList.remove("hidden")
+      this.shadowRoot.getElementById("delete-all-btn").classList.remove("hidden")
+    }
+    this.shadowRoot.querySelector("action-bar").classList.toggle("hidden", !!!this.shadowRoot.querySelector("action-bar action-bar-item:not(.hidden)"))
   }
 
   async uploadFile(){

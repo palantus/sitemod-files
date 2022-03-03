@@ -14,6 +14,7 @@ export default async () => {
           .init({typeModel: File})
   
   Folder.sharedRoot()
+  Folder.root().acl = "r:shared;w:private"
 
   return {
   }

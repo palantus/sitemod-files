@@ -77,12 +77,6 @@ class Element extends HTMLElement {
     this.shadowRoot.getElementById("download-btn").addEventListener("click", this.downloadFile)
 
     this.fileId = /([\da-zA-Z]+)/.exec(state().path.split("/")[2])[0]
-
-    userPermissions().then(permissions => {
-      if(permissions.includes("file.edit")){
-        this.shadowRoot.getElementById("delete-btn").classList.remove("hidden")
-      }
-    })
   }
 
   async refreshData(id = this.fileId){
@@ -114,7 +108,11 @@ class Element extends HTMLElement {
     this.shadowRoot.getElementById('hash').parentElement.classList.toggle("hidden", file.type != "file")
 
     this.shadowRoot.getElementById('download-btn').classList.toggle("hidden", file.type != "file")
-    
+
+    let permissions = await userPermissions()
+    if(permissions.includes("file.edit") && file.rights.includes("w")){
+      this.shadowRoot.getElementById("delete-btn").classList.remove("hidden")
+    }
 
     this.shadowRoot.querySelectorAll("field-edit:not([disabled])").forEach(e => e.setAttribute("patch", `file/${file.id}`));
 
