@@ -87,7 +87,6 @@ template.innerHTML = `
           <th>Filename</th>
           <th></th>
           <th>Delete date</th>
-          <th>Hash</th>
         </tr>
       </thead>
       <tbody id="uploadedfiles">
@@ -130,9 +129,9 @@ class Element extends HTMLElement {
         <td><field-ref ref="/file/${f.id}">${f.name}</field-ref></td>
         <td>
           <button class="copy-link" data-url="${f.dropLink}">Copy link</button>
+          <button class="copy-hash" data-hash="${f.hash}">Copy hash</button>
         </td>
         <td>${f.expirationDate?.substring(0, 10)||""}</td>
-        <td>${f.hash}</td>
       </tr>`).join("")
   }
 
@@ -209,6 +208,8 @@ class Element extends HTMLElement {
   dropsClick(e){
     if(e.target.classList.contains("copy-link")){
       navigator.clipboard.writeText(e.target.getAttribute("data-url"))
+    } else if(e.target.classList.contains("copy-hash")){
+      navigator.clipboard.writeText(e.target.getAttribute("data-hash"))
     }
   }
 
