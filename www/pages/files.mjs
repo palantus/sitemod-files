@@ -122,7 +122,7 @@ class Element extends HTMLElement {
   async refreshData(){
     this.folder = this.folderId ? await api.get(`file/${encodeURI(this.folderId)}`)
                                 : await api.get(`file/path${encodeURI(this.folderPath)}`)
-    if(!this.folder || this.folder.content.length < 1) return this.shadowRoot.querySelector('table tbody').innerHTML = ''
+    if(!this.folder) return this.shadowRoot.querySelector('table tbody').innerHTML = ''
     this.shadowRoot.getElementById("folder-name").innerText = this.folder.parentPath == "/" && this.folder.name == "shared" ? "Shared files"
                                                             : this.folder.parentPath == "/" ? "My files"
                                                             : !this.folder.parentPath && !this.folder.name ? "Root"
