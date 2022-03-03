@@ -62,7 +62,7 @@ class Folder extends Entity {
     return "" + (acl.hasAccess(user, "r")?'r':'') + (acl.hasAccess(user, "w")?'w':'')
   }
 
-  toObj(user, includeContent = true){
+  toObj(user, shareKey, includeContent = true){
     return {
       id: this._id,
       type: "folder",
@@ -70,7 +70,7 @@ class Folder extends Entity {
       tags: this.tags.filter(t => t.startsWith("user-")).map(t => t.substr(5)),
       rights: this.rights(user),
       parentPath: this.parentPath,
-      content: includeContent ? this.content.map(c => c.toObj(user, false)) : undefined
+      content: includeContent ? this.content.map(c => c.toObj(user, shareKey, false)) : undefined
     }
   }
 
