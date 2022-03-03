@@ -70,7 +70,7 @@ class Folder extends Entity {
       tags: this.tags.filter(t => t.startsWith("user-")).map(t => t.substr(5)),
       rights: this.rights(user),
       parentPath: this.parentPath,
-      content: includeContent ? this.content.map(c => c.toObj(user, shareKey, false)) : undefined
+      content: includeContent ? this.content.filter(c => c.hasAccess(user, 'r', shareKey)).map(c => c.toObj(user, shareKey, false)) : undefined
     }
   }
 
@@ -88,6 +88,7 @@ class Folder extends Entity {
   }
 
   static userRoot(user){
+    if(!user || user.id == "guest") return null;
     return Folder.find(`tag:userroot tag:folder owner.id:${user}`) 
       || new Folder(user.id, user, Folder.root())
             .tag("userroot")
