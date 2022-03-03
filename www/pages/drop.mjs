@@ -1,5 +1,6 @@
 const elementName = 'drop-page'
 
+import {siteURL} from "/system/core.mjs"
 import api from "/system/api.mjs"
 import "/components/field-edit.mjs"
 import "/components/field-ref.mjs"
@@ -61,6 +62,7 @@ template.innerHTML = `
   
   <action-bar>
       <action-bar-item id="delete-all-btn">Delete all</action-bar-item>
+      <action-bar-item id="copy-drop-link-btn">Copy personal link</action-bar-item>
   </action-bar>  
 
   <div id="container">
@@ -118,6 +120,7 @@ class Element extends HTMLElement {
     this.shadowRoot.getElementById("fileupload").addEventListener("submit", this.submitFile)
 
     this.shadowRoot.getElementById("delete-all-btn").addEventListener("click", () => confirmDialog("Are you sure that you want to delete all dropped files?").then(answer => answer ? api.del("file/drop/all").then(this.refreshData) : null))
+    this.shadowRoot.getElementById("copy-drop-link-btn").addEventListener("click", () => api.get("me/token").then(({token}) => navigator.clipboard.writeText(`${siteURL()}/drop?token=${token}`)))
     this.shadowRoot.getElementById("uploadedfiles").addEventListener("click", this.dropsClick)
   }
 
