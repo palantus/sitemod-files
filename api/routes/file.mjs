@@ -9,6 +9,7 @@ import { validateAccess } from "../../../../services/auth.mjs"
 import File from "../../models/file.mjs";
 import Folder from "../../models/folder.mjs";
 import FileOrFolder from "../../models/fileorfolder.mjs";
+import Share from "../../../../models/share.mjs";
 
 export default (app) => {
 
@@ -22,15 +23,15 @@ export default (app) => {
   route.get("/tag/:tag", function (req, res, next) {
     if (!validateAccess(req, res, { permission: "file.read" })) return;
     let results = FileOrFolder.allByTag(sanitize(req.params.tag))
-      .filter(f => f.hasAccess(res.locals.user, 'r'))
-      .map(c => c.toObj(res.locals.user))
+      .filter(f => f.hasAccess(res.locals.user, 'r', res.locals))
+      .map(c => c.toObj(res.locals.user, res.locals.shareKey))
     res.json(results)
   })
 
   route.get("/path", function (req, res, next) {
     if (!validateAccess(req, res, { permission: "file.read" })) return;
     Folder.userRoot(res.locals.user) //Will create user root if missing
-    res.json(Folder.root().toObj(res.locals.user))
+    res.json(Folder.root().toObj(res.locals.user, res.locals.shareKey))
   })
 
   route.get("/path/*", function (req, res, next) {
@@ -40,14 +41,14 @@ export default (app) => {
     let folder = path.substring(1).split("/").reduce((parent, name) => {
       return parent?.getChildFolderNamed(name, res.locals.user) || null
     }, Folder.root())
-    res.json(folder?.toObj(res.locals.user) || null)
+    res.json(folder?.toObj(res.locals.user, res.locals.shareKey) || null)
   })
 
   route.get("/query", function (req, res, next) {
     if (!validateAccess(req, res, { permission: "file.read" })) return;
     res.json(fileService.search(req.query.filter).results
       .filter(f => f.hasAccess(res.locals.user, 'r'))
-      .map(r => r.toObj(res.locals.user)))
+      .map(r => r.toObj(res.locals.user, res.locals.shareKey)))
   })
 
   route.post("/tag/:tag/upload", (req, res, next) => {
@@ -73,6 +74,7 @@ export default (app) => {
       for (let f of fileObj) {
         let file = new File({ ...f, tag: "drop", expire: expirationDate.toISOString(), owner: res.locals.user })
         file.acl = req.path.endsWith("/shared") ? "r:shared;w:shared" : "r:private;w:private"
+        file.shareKey = new Share("drop", 'r', res.locals.user).attach(file).key;
         files.push({ id: file._id, hash: file.hash })
       }
     }
@@ -87,6 +89,17 @@ export default (app) => {
     res.json({ success: true })
   })
 
+  route.get("/drop", function (req, res, next) {
+    if (!validateAccess(req, res, { permission: "file.read" })) return;
+    let results = FileOrFolder.allByTag("drop")
+                              .filter(f => f.hasAccess(res.locals.user, 'r', res.locals))
+                              .map(c => ({
+                                ...c.toObj(res.locals.user, res.locals.shareKey), 
+                                dropLink: `${global.sitecore.apiURL}/file/raw/${c._id}${c.name ? `/${encodeURI(c.name)}` : ''}?shareKey=${c.shareKey}`
+                              }))
+    res.json(results)
+  })
+
   route.post("/folder/:id/upload", (req, res, next) => {
     if (!validateAccess(req, res, { permission: "file.upload" })) return;
     let folder = Folder.lookup(sanitize(req.params.id))
@@ -96,7 +109,11 @@ export default (app) => {
     for (let filedef in req.files) {
       let fileObj = Array.isArray(req.files[filedef]) ? req.files[filedef] : [req.files[filedef]]
       for (let f of fileObj) {
-        if (folder.hasChildNamed(f.name)) continue
+        let origName = f.name
+        let i = 1;
+        while (folder.hasChildNamed(f.name)){
+          f.name = origName.includes(".") ? `${origName.split(".").slice(0, -1).join(".")}-${++i}.${origName.split(".").slice(-1)}` : `${origName}-${++i}`
+        }
         let file = new File({
           ...f,
           tag: req.query.tag || null,
@@ -128,12 +145,12 @@ export default (app) => {
     if (!parent.validateAccess(res, 'w')) return;
     if (parent.hasChildNamed(sanitize(req.body.name))) throw "A file or folder with that name already exists"
     let child = new Folder(req.body.name, res.locals.user, parent)
-    res.json(child.toObj(res.locals.user))
+    res.json(child.toObj(res.locals.user, res.locals.shareKey))
   })
 
   route.get(['/dl/:id', '/dl/:id/:filename', '/download/:id', '/download/:id/:filename'], function (req, res, next) {
     if (!validateAccess(req, res, { permission: "file.read" })) return;
-    let file = File.lookupAccessible(sanitize(req.params.id), res.locals.user)
+    let file = File.lookupAccessible(sanitize(req.params.id), res.locals.user, res.locals.shareKey)
     if (!file) throw "Unknown file";
 
     res.setHeader('Content-disposition', `attachment; filename=${file.name}`);
@@ -145,7 +162,7 @@ export default (app) => {
 
   route.get(['/raw/:id', '/raw/:id/:filename'], function (req, res, next) {
     if (!validateAccess(req, res, { permission: "file.read" })) return;
-    let file = File.lookupAccessible(sanitize(req.params.id), res.locals.user)
+    let file = File.lookupAccessible(sanitize(req.params.id), res.locals.user, res.locals.shareKey)
     if (!file) throw "Unknown file";
 
     res.setHeader('Content-disposition', `inline; filename=${file.name}`);
@@ -240,8 +257,8 @@ export default (app) => {
 
   route.get('/:id', async function (req, res, next) {
     if (!validateAccess(req, res, { permission: "file.read" })) return;
-    let file = FileOrFolder.lookupAccessible(sanitize(req.params.id), res.locals.user)
+    let file = FileOrFolder.lookupAccessible(sanitize(req.params.id), res.locals.user, res.locals.shareKey)
     if (!file) return res.sendStatus(404);
-    res.json(file.toObj(res.locals.user));
+    res.json(file.toObj(res.locals.user, res.locals.shareKey));
   })
 };

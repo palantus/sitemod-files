@@ -49,8 +49,8 @@ class Folder extends Entity {
     return parent ? parent?.path || "/" : null
   }
 
-  hasAccess(user, right = 'r'){
-    return new ACL(this, DataType.lookup("folder")).hasAccess(user, right)
+  hasAccess(user, right = 'r', shareKey = null){
+    return new ACL(this, DataType.lookup("folder")).hasAccess(user, right, shareKey)
   }
 
   validateAccess(res, right, respondIfFalse = true){

@@ -1,6 +1,7 @@
 routes.push(...[
   {path: "/drop",                   page: "/pages/drop.mjs"},
   {path: "/filesources",            page: "/pages/filesources.mjs"},
-  {regexp: /\/file\/(\d+)/,         page: "/pages/file.mjs"},
-  {regexp: /\/files*/,              page: "/pages/files.mjs"},
+  {regexp: /\/file\/(\d+)/,         page: "/pages/file.mjs", publicAccess: true},
+  {regexp: /\/folder\/(\d+)/,       page: "/pages/files.mjs", publicAccess: true},
+  {regexp: /\/files*/,              page: "/pages/files.mjs", publicAccess: true},
 ])

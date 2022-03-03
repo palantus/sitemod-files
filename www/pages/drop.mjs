@@ -44,9 +44,9 @@ template.innerHTML = `
     }
     
     #filestable th:nth-child(1){min-width: 250px;}
-    #filestable th:nth-child(2){min-width: 100px;}
-    #filestable th:nth-child(3){min-width: 276px;}
-    #filestable th:nth-child(4){min-width: 125px;}
+    #filestable th:nth-child(2){min-width: 75px;}
+    #filestable th:nth-child(3){min-width: 100px;}
+    #filestable th:nth-child(4){min-width: 276px;}
     
     #filestable td, #filestable th{
       border-bottom: 1px solid;
@@ -85,9 +85,9 @@ template.innerHTML = `
       <thead>
         <tr>
           <th>Filename</th>
+          <th></th>
           <th>Delete date</th>
           <th>Hash</th>
-          <th>Links</th>
         </tr>
       </thead>
       <tbody id="uploadedfiles">
@@ -109,6 +109,7 @@ class Element extends HTMLElement {
     this.drop = this.drop.bind(this)
     this.submitFile = this.submitFile.bind(this)
     this.refreshData = this.refreshData.bind(this)
+    this.dropsClick = this.dropsClick.bind(this)
 
     let uploadButton = this.shadowRoot.getElementById("uploadbutton");
     'drag dragstart dragend dragover dragenter dragleave drop'.split(" ").forEach(e => uploadButton.addEventListener(e, this.preventDef));
@@ -118,20 +119,20 @@ class Element extends HTMLElement {
     this.shadowRoot.getElementById("fileupload").addEventListener("submit", this.submitFile)
 
     this.shadowRoot.getElementById("delete-all-btn").addEventListener("click", () => confirmDialog("Are you sure that you want to delete all dropped files?").then(answer => answer ? api.del("file/drop/all").then(this.refreshData) : null))
+    this.shadowRoot.getElementById("uploadedfiles").addEventListener("click", this.dropsClick)
   }
 
   async refreshData(){
-    let files = await api.get("file/tag/drop")
+    let files = await api.get("file/drop")
     this.shadowRoot.getElementById("uploadedfiles").innerHTML = files.reverse()
                                                                      .map(f => `
       <tr>
         <td><field-ref ref="/file/${f.id}">${f.name}</field-ref></td>
+        <td>
+          <button class="copy-link" data-url="${f.dropLink}">Copy link</button>
+        </td>
         <td>${f.expirationDate?.substring(0, 10)||""}</td>
         <td>${f.hash}</td>
-        <td>
-          <a href="${f.links?.download}" target="_blank">Download</a>
-          <a href="${f.links?.raw}" target="_blank">Raw</a>
-        </td>
       </tr>`).join("")
   }
 
@@ -204,7 +205,13 @@ class Element extends HTMLElement {
     let files = await api.upload(`/file/drop`, formData);
     this.refreshData();
   }
-  dataTransfer
+  
+  dropsClick(e){
+    if(e.target.classList.contains("copy-link")){
+      navigator.clipboard.writeText(e.target.getAttribute("data-url"))
+    }
+  }
+
   connectedCallback() {
     this.refreshData(this.fileId);
     window.addEventListener("paste", this.pasteHandler);

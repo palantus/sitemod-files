@@ -9,7 +9,6 @@ import "/components/field-list.mjs"
 import "/components/action-bar.mjs"
 import "/components/action-bar-item.mjs"
 import "/components/acl.mjs"
-import { promptDialog } from "../../components/dialog.mjs"
 import { confirmDialog } from "../../components/dialog.mjs"
 import { alertDialog } from "../../components/dialog.mjs"
 
@@ -53,19 +52,12 @@ template.innerHTML = `
       <field-edit type="text" label="Mime type" id="mime"></field-edit>
       <field-edit type="text" label="Hash" id="hash" disabled></field-edit>
       <field-edit type="text" label="Size" id="size" disabled></field-edit>
+      <field-edit type="text" label="Wiki reference" id="wiki-ref" disabled></field-edit>
     </field-list>
 
     <br>
     <acl-component id="acl" rights="rw" disabled></acl-component>
   
-    <h3 class="subheader">Links:</h3>
-    <field-list id="links-list" labels-pct="25">
-      <field-edit type="text" label="Wiki reference" id="wiki-ref" disabled></field-edit>
-      <field-edit type="text" label="Raw link" id="url-raw" disabled></field-edit>
-      <field-edit type="text" label="Temp external (~2 days)" id="url-external" disabled></field-edit>
-    </field-list>
-
-
     <h3 class="subheader">Preview:</h3>
     <div id="preview"></div>
   </div>
@@ -115,15 +107,11 @@ class Element extends HTMLElement {
       this.shadowRoot.getElementById('mime').setAttribute("value", file.mime)
       this.shadowRoot.getElementById('size').setAttribute("value", file.size?`${Math.floor(file.size/1000)} KB`:"")
       this.shadowRoot.getElementById('hash').setAttribute("value", file.hash)
-      this.shadowRoot.getElementById('url-raw').setAttribute("value", file.links.raw)
-      this.shadowRoot.getElementById('url-external').setAttribute("value", file.links.download)
     }
 
     this.shadowRoot.getElementById('mime').parentElement.classList.toggle("hidden", file.type != "file")
     this.shadowRoot.getElementById('size').parentElement.classList.toggle("hidden", file.type != "file")
     this.shadowRoot.getElementById('hash').parentElement.classList.toggle("hidden", file.type != "file")
-    this.shadowRoot.getElementById('url-raw').parentElement.classList.toggle("hidden", file.type != "file")
-    this.shadowRoot.getElementById('url-external').parentElement.classList.toggle("hidden", file.type != "file")
 
     this.shadowRoot.getElementById('download-btn').classList.toggle("hidden", file.type != "file")
     
@@ -168,7 +156,7 @@ class Element extends HTMLElement {
 
     this.shadowRoot.getElementById("acl").setAttribute("type", file.type)
     this.shadowRoot.getElementById("acl").setAttribute("entity-id", this.fileId)
-    setTimeout(() => this.shadowRoot.getElementById("acl").removeAttribute("disabled"), 500)
+    setTimeout(() => this.shadowRoot.getElementById("acl").removeAttribute("disabled"), 100)
   }
   
   async deleteFile(){

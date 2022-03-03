@@ -38,13 +38,13 @@ export default class File extends Entity {
     return File.find(`prop:"hash=${hash}" tag:file !tag:folder`)
   }
 
-  static lookupAccessible(idOrHash, user){
+  static lookupAccessible(idOrHash, user, shareKey){
     if(!idOrHash) return null;
     let file = !isNaN(idOrHash) ? File.lookup(idOrHash) : null
-    if(file && file.hasAccess(user, 'r')) return file;
+    if(file && file.hasAccess(user, 'r', shareKey)) return file;
     if(isNaN(idOrHash)){
       for(let file of File.search(`prop:"hash=${idOrHash}" tag:file !tag:folder`)){
-        if(file.hasAccess(user, 'r')) 
+        if(file.hasAccess(user, 'r', shareKey)) 
           return file;
       }
     }
@@ -68,8 +68,8 @@ export default class File extends Entity {
     return `${parentPath}${parentPath?.endsWith("/")?"":"/"}${parent.name}`
   }
 
-  hasAccess(user, right = 'r'){
-    return new ACL(this, DataType.lookup("file")).hasAccess(user, right)
+  hasAccess(user, right = 'r', shareKey = null){
+    return new ACL(this, DataType.lookup("file")).hasAccess(user, right, shareKey)
   }
 
   validateAccess(res, right, respondIfFalse = true){
@@ -81,7 +81,7 @@ export default class File extends Entity {
     return "" + (acl.hasAccess(user, "r")?'r':'') + (acl.hasAccess(user, "w")?'w':'')
   }
 
-  toObj(user){
+  toObj(user, shareKey){
     return {
       id: this._id,
       type: "file",
@@ -94,7 +94,7 @@ export default class File extends Entity {
       rights: this.rights(user),
       expirationDate: this.expire || null,
       links: {
-        download: `${global.sitecore.apiURL}/file/dl/${this._id}${this.name ? `/${encodeURI(this.name)}` : ''}?token=${userService.getTempAuthToken(user)}`,
+        download: `${global.sitecore.apiURL}/file/dl/${this._id}${this.name ? `/${encodeURI(this.name)}` : ''}?${shareKey ? `shareKey=${shareKey}` : `token=${userService.getTempAuthToken(user)}`}`,
         raw: `${global.sitecore.apiURL}/file/raw/${this._id}${this.name ? `/${encodeURI(this.name)}` : ''}?token=${userService.getTempAuthToken(user)}`,
       }
     }

@@ -33,11 +33,13 @@ template.innerHTML = `
     }
     img.iconbtn{width: 15px; cursor: pointer; margin-right: 2px;}
 
-    table thead th:nth-child(1){width: 25px}
-    table thead th:nth-child(2){width: 450px}
+    table tbody td:nth-child(1){width: 25px}
+    table tbody td:nth-child(2){width: 450px}
     table tbody td:last-child{white-space: nowrap;}
+    table tbody td{padding-top: 2px; padding-bottom: 0px;}
 
     table th:nth-child(2), table td:nth-child(2){padding-left: 0px;}
+    h1{margin-top: 5px; margin-left: 5px; margin-bottom: 0px;}
   </style>  
 
   <action-bar>
@@ -55,14 +57,9 @@ template.innerHTML = `
   </action-bar>
 
   <div id="container">    
+    <h1 id="folder-name"></h1>
+
     <table>
-        <thead>
-            <tr>
-              <th></th>
-              <th>Filename</th>
-              <th></th>
-            </tr>
-        </thead>
         <tbody>
         </tbody>
     </table>
@@ -98,11 +95,17 @@ class Element extends HTMLElement {
     this.shadowRoot.getElementById("delete-all-btn").addEventListener("click", this.deleteAll)
     this.shadowRoot.querySelector('table tbody').addEventListener("click", this.tabClick)
 
-    this.folderPath = state().path.substring(6)
-    if(!this.folderPath.startsWith("/")) this.folderPath = "/" + this.folderPath
-    this.folderPath = decodeURI(this.folderPath);
-    if(this.folderPath == "/mine")
-      this.folderPath = `/${user?.id}`
+    if(state().path.startsWith("/folder/")){
+      this.folderId = state().path.substring(8)
+      if(!isNaN(this.folderId)) this.folderId = parseInt(this.folderId)
+      else this.folderId = null;
+    } else {
+      this.folderPath = state().path.substring(6)
+      if(!this.folderPath.startsWith("/")) this.folderPath = "/" + this.folderPath
+      this.folderPath = decodeURI(this.folderPath);
+      if(this.folderPath == "/mine")
+        this.folderPath = `/${user?.id}`
+    }
 
     userPermissions().then(permissions => {
       if(permissions.includes("file.upload")){
@@ -113,11 +116,17 @@ class Element extends HTMLElement {
         this.shadowRoot.getElementById("add-folder").classList.remove("hidden")
         this.shadowRoot.getElementById("delete-all-btn").classList.remove("hidden")
       }
+      this.shadowRoot.querySelector("action-bar").classList.toggle("hidden", !!!this.shadowRoot.querySelector("action-bar action-bar-item:not(.hidden)"))
     })
   }
   async refreshData(){
-    this.folder = await api.get(`file/path${encodeURI(this.folderPath)}`)
+    this.folder = this.folderId ? await api.get(`file/${encodeURI(this.folderId)}`)
+                                : await api.get(`file/path${encodeURI(this.folderPath)}`)
     if(!this.folder || this.folder.content.length < 1) return this.shadowRoot.querySelector('table tbody').innerHTML = ''
+    this.shadowRoot.getElementById("folder-name").innerText = this.folder.parentPath == "/" && this.folder.name == "shared" ? "Shared files"
+                                                            : this.folder.parentPath == "/" ? "My files"
+                                                            : !this.folder.parentPath && !this.folder.name ? "Root"
+                                                            : this.folder.name
     setPageTitle(!this.folder.parentPath ? "Files" : this.folder.name)
     this.shadowRoot.querySelector('table tbody').innerHTML = this.folder.content.sort((a, b) => {
       return a.type == b.type ? (a.name?.toLowerCase() < b.name?.toLowerCase() ? -1 : 1)
@@ -125,7 +134,7 @@ class Element extends HTMLElement {
     }).map(f => `
         <tr class="result ${f.type}" data-id="${f.id}" data-name="${f.name}">
           <td><img style="width: 20px;" src="/img/${f.type == "folder" ? "folder.svg" : "file.png"}"></td>
-          <td><field-ref ref="${f.type == "folder" ? `/files${(f.parentPath&&f.parentPath!="/") ? encodeURI(f.parentPath):""}/${encodeURI(f.name)}` : `/file/${f.id}`}">${f.name}</field-ref></td>
+          <td><field-ref ref="${f.type == "folder" ? (this.folderId ? `/folder/${f.id}` : `/files${(f.parentPath&&f.parentPath!="/") ? encodeURI(f.parentPath):""}/${encodeURI(f.name)}`) : `/file/${f.id}`}">${f.name}</field-ref></td>
           <td>
             <img title="Show info" class="info iconbtn" src="/img/info.png">
             <img title="Edit" class="edit iconbtn" src="/img/edit.ico">

@@ -9,18 +9,18 @@ export default class FileOrFolder extends Entity {
     return FileOrFolder.find(`id:"${id}" (tag:file|tag:folder)`)
   }
 
-  static lookupAccessible(idOrHash, user){
+  static lookupAccessible(idOrHash, user, shareKey){
     if(!idOrHash) return null;
     let file = !isNaN(idOrHash) ? FileOrFolder.lookup(idOrHash)?.toType() : null
-    if(file && file.hasAccess(user, 'r')) return file;
+    if(file && file.hasAccess(user, 'r', shareKey)) return file;
     if(isNaN(idOrHash)){
-      return File.lookupAccessible(idOrHash, user)
+      return File.lookupAccessible(idOrHash, user, shareKey)
     }
     return null;
   }
   
-  hasAccess(user, right = 'r'){
-    return this.toType().hasAccess(user, right)
+  hasAccess(user, right = 'r', shareKey = null){
+    return this.toType().hasAccess(user, right, shareKey)
   }
 
   validateAccess(res, right, respondIfFalse = true){
