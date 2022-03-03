@@ -5,7 +5,7 @@ import { sanitize } from "entitystorage"
 import { default as fileService, tokens } from "../../services/file.mjs"
 import Archiver from 'archiver';
 import moment from "moment"
-import { validateAccess } from "../../../../services/auth.mjs"
+import { validateAccess, noGuest } from "../../../../services/auth.mjs"
 import File from "../../models/file.mjs";
 import Folder from "../../models/folder.mjs";
 import FileOrFolder from "../../models/fileorfolder.mjs";
@@ -52,7 +52,7 @@ export default (app) => {
       .map(r => r.toObj(res.locals.user, res.locals.shareKey)))
   })
 
-  route.post("/tag/:tag/upload", (req, res, next) => {
+  route.post("/tag/:tag/upload", noGuest, (req, res, next) => {
     if (!validateAccess(req, res, { permission: "file.upload" })) return;
     let files = []
     for (let filedef in req.files) {
@@ -65,7 +65,7 @@ export default (app) => {
     res.json(files)
   })
 
-  route.post(["/drop", "/drop/shared"], (req, res, next) => {
+  route.post(["/drop", "/drop/shared"], noGuest, (req, res, next) => {
     if (!validateAccess(req, res, { permission: "file.upload" })) return;
     let expirationDate = new Date()
     expirationDate.setDate(expirationDate.getDate() + 30)
@@ -82,7 +82,7 @@ export default (app) => {
     res.json(files)
   })
 
-  route.delete("/drop/all", (req, res, next) => {
+  route.delete("/drop/all", noGuest, (req, res, next) => {
     if (!validateAccess(req, res, { permission: "file.edit" })) return;
     FileOrFolder.allByTag("drop")
       .filter(f => f.hasAccess(res.locals.user, 'w'))
@@ -90,7 +90,7 @@ export default (app) => {
     res.json({ success: true })
   })
 
-  route.get("/drop", function (req, res, next) {
+  route.get("/drop", noGuest, function (req, res, next) {
     if (!validateAccess(req, res, { permission: "file.read" })) return;
     let results = FileOrFolder.allByTag("drop")
                               .filter(f => f.hasAccess(res.locals.user, 'r', res.locals))
@@ -128,7 +128,7 @@ export default (app) => {
     res.json(files)
   })
 
-  route.post("/upload-basic", function (req, res, next) {
+  route.post("/upload-basic", noGuest, function (req, res, next) {
     if (!validateAccess(req, res, { permission: "file.upload" })) return;
     if (!req.query.tags) throw "Tags in the query are mandatory"
     if (!req.query.hash) throw "Must provide hash in query";
