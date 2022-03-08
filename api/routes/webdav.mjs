@@ -51,10 +51,12 @@ class DavHTTPBasicAuthentication {
     const password = value[1];
 
     this.userManager.getUserByNamePassword(username, password, (e, user) => {
-      if (e)
+      if (e){
+        console.log(e)
         onError(webdav.Errors.BadAuthentication);
-      else
+      } else {
         callback(null, user);
+      }
     });
   }
 }
@@ -179,7 +181,10 @@ export class DavFileSystem extends webdav.FileSystem {
   _create(path, ctx, callback) {
     let parent = Folder.lookupByPath(path.getParent().toString())
     if(!parent) return callback(Errors.ResourceNotFound);
-    if (!parent.hasAccess(ctx.context.user.user, 'w')) return callback(Errors.BadAuthentication);
+    if (!parent.hasAccess(ctx.context.user.user, 'w')) {
+      console.log(`${ctx.context.user.user.id} doesn't have access to ${path.toString()}`)
+      return callback(Errors.BadAuthentication);
+    }
     if (parent.hasChildNamed(path.fileName())) return callback(Errors.ResourceAlreadyExists);
 
     if (ctx.type.isDirectory) {
@@ -200,7 +205,10 @@ export class DavFileSystem extends webdav.FileSystem {
   _delete(path, ctx, callback) {
     let ff = FileOrFolder.lookupByPath(path.toString())
     if(!ff) return callback(Errors.ResourceNotFound);
-    if(!ff.hasAccess(ctx.context.user.user, 'w')) return callback(Errors.BadAuthentication);
+    if(!ff.hasAccess(ctx.context.user.user, 'w')) {
+      console.log(`${ctx.context.user.user.id} doesn't have access to ${path.toString()}`)
+      return callback(Errors.BadAuthentication);
+    }
     ff.delete();
     callback(null);
   }
