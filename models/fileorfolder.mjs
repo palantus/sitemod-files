@@ -27,6 +27,12 @@ export default class FileOrFolder extends Entity {
     return this.toType().validateAccess(res, right, respondIfFalse)
   }
 
+  static lookupByPath(path){
+    return path == "/" ? Folder.root() : path.substring(1).split("/").reduce((parent, name) => {
+      return FileOrFolder.from(parent?.content.find(f => f.name == name))?.toType() || null
+    }, Folder.root()) || null
+  }
+
   static allByTag(tag) {
     if(!tag) return [];
     return FileOrFolder.search(`tag:"user-${tag}" (tag:file|tag:folder)`)

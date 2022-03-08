@@ -8,6 +8,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "archiver": "^5.3.0"
+    "archiver": "^5.3.0",
+    "webdav-server": "^2.6.2"
   }
 }

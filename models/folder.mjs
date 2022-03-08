@@ -3,11 +3,13 @@ import FileOrFolder from "./fileorfolder.mjs";
 import ACL from "../../../models/acl.mjs"
 import DataType from "../../../models/datatype.mjs";
 import User from "../../../models/user.mjs";
+import { getTimestamp } from "../../../tools/date.mjs";
 
 class Folder extends Entity {
   initNew(name, owner, parentFolder){
     this.tag("folder")
     this.name = name;
+    this.timestamp = getTimestamp()
     this.rel(parentFolder, "parent")
 
     ACL.setDefaultACLOnEntity(this, owner.id == "guest" && parentFolder ? parentFolder.related.owner : owner, DataType.lookup("folder"))
@@ -21,6 +23,12 @@ class Folder extends Entity {
   static lookupHash(hash) {
     if(!id) return null;
     return File.find(`prop:"hash=${hash}" tag:folder`)
+  }
+
+  static lookupByPath(path){
+    return path == "/" ? Folder.root() : path.substring(1).split("/").reduce((parent, name) => {
+      return Folder.from(parent?.content.find(f => f.name == name && f.tags.includes("folder"))) || null
+    }, Folder.root()) || null
   }
 
   static rootContent(){
