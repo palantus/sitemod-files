@@ -126,7 +126,7 @@ export class DavPrivilegeManager extends webdav.PrivilegeManager {
 
     if (file.hasAccess(user.user, 'r')) {
       if (file.hasAccess(user.user, 'w')) {
-        console.log(user.user.id, path.toString(), "w")
+        //console.log(user.user.id, path.toString(), "w")
         return [
           'canRead',
           'canReadLocks',
@@ -142,7 +142,7 @@ export class DavPrivilegeManager extends webdav.PrivilegeManager {
           'canWriteContentSource'
         ]
       } else {
-        console.log(user.user.id, path.toString(), "r")
+        //console.log(user.user.id, path.toString(), "r")
         return [
           'canRead',
           'canReadLocks',
@@ -153,7 +153,7 @@ export class DavPrivilegeManager extends webdav.PrivilegeManager {
         ]
       }
     }
-    console.log(user.user.id, path.toString(), "NONE")
+    //console.log(user.user.id, path.toString(), "NONE")
     return []
   }
 
