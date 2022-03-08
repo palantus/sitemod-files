@@ -10,7 +10,8 @@ export default (route, app) => {
   const privilegeManager = new DavPrivilegeManager();
   const server = new webdav.WebDAVServer({
     httpAuthentication: new DavHTTPBasicAuthentication(userManager, 'realm'),
-    privilegeManager: privilegeManager
+    privilegeManager: privilegeManager,
+    requireAuthentification: true
   });
   server.setFileSystem('/', new DavFileSystem())
 
@@ -124,6 +125,8 @@ export class DavPrivilegeManager extends webdav.PrivilegeManager {
   getRights(user, path) {
     let file = FileOrFolder.lookupByPath(path.toString())
     if (!file)
+      file = Folder.lookupByPath(path.getParent()?.toString())
+    if(!file)
       return [];
 
     if (file.hasAccess(user.user, 'r')) {
@@ -163,7 +166,7 @@ export class DavPrivilegeManager extends webdav.PrivilegeManager {
     if (!user)
       return callback(null, false);
 
-    const rights = this.getRights(user, fullPath.toString());
+    const rights = this.getRights(user, fullPath);
     const can = !!rights && rights.some((r) => r === 'all' || r === privilege);
     callback(null, can);
   }
