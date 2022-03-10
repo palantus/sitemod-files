@@ -95,10 +95,17 @@ class Folder extends Entity {
             .prop("acl", "r:shared;w:private")
   }
 
+  static homeRoot(){
+    return Folder.find("tag:homeroot tag:folder") 
+      || new Folder("home", User.lookupAdmin(), Folder.root())
+            .tag("homeroot")
+            .prop("acl", "r:shared;w:private")
+  }
+
   static userRoot(user){
     if(!user || user.id == "guest") return null;
     return Folder.find(`tag:userroot tag:folder owner.id:${user}`) 
-      || new Folder(user.id, user, Folder.root())
+      || new Folder(user.id, user, Folder.homeRoot())
             .tag("userroot")
             .prop("acl", "r:private;w:private")
   }

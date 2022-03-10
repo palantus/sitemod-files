@@ -10,7 +10,7 @@ import "/components/field-edit.mjs"
 import "/components/acl.mjs"
 import "/components/action-bar-menu.mjs"
 import {on, off, fire} from "/system/events.mjs"
-import {state, apiURL, setPageTitle, goto} from "/system/core.mjs"
+import {state, apiURL, setPageTitle, goto, siteURL} from "/system/core.mjs"
 import {showDialog} from "/components/dialog.mjs"
 import { alertDialog } from "../../components/dialog.mjs"
 import { confirmDialog } from "../../components/dialog.mjs"
@@ -48,9 +48,9 @@ template.innerHTML = `
 
       <action-bar-item id="options-menu" class="hidden">
         <action-bar-menu label="Options">
-          <button id="download-folder" title="Only downloads the files that are currently shown. It does not allow download of folders.">Download all files</button>
-          <br>
-          <button id="delete-all-btn" class="hidden">Delete all</button>
+          <button id="download-folder" title="Only downloads the files that are currently shown. It does not allow download of folders.">Download all files</button><br>
+          <button id="delete-all-btn" class="hidden">Delete all</button><br>
+          <button id="copy-webdav-btn" class="hidden">Copy webdav link</button><br>
         </action-bar-menu>
       </action-bar-item>
 
@@ -93,6 +93,9 @@ class Element extends HTMLElement {
     this.shadowRoot.getElementById("add-folder").addEventListener("click", this.addFolder)
     this.shadowRoot.getElementById("download-folder").addEventListener("click", this.downloadFolder)
     this.shadowRoot.getElementById("delete-all-btn").addEventListener("click", this.deleteAll)
+    this.shadowRoot.getElementById("copy-webdav-btn").addEventListener("click", () => {
+      navigator.clipboard.writeText(`${siteURL()}/webdav${this.folderPath}`)
+    })
     this.shadowRoot.querySelector('table tbody').addEventListener("click", this.tabClick)
 
     if(state().path.startsWith("/folder/")){
@@ -104,7 +107,7 @@ class Element extends HTMLElement {
       if(!this.folderPath.startsWith("/")) this.folderPath = "/" + this.folderPath
       this.folderPath = decodeURI(this.folderPath);
       if(this.folderPath == "/mine")
-        this.folderPath = `/${user?.id}`
+        this.folderPath = `/home/${user?.id}`
     }
   }
   async refreshData(){
@@ -142,6 +145,7 @@ class Element extends HTMLElement {
       this.shadowRoot.getElementById("options-menu").classList.remove("hidden")
       this.shadowRoot.getElementById("add-folder").classList.remove("hidden")
       this.shadowRoot.getElementById("delete-all-btn").classList.remove("hidden")
+      this.shadowRoot.getElementById("copy-webdav-btn").classList.remove("hidden")
     }
     this.shadowRoot.querySelector("action-bar").classList.toggle("hidden", !!!this.shadowRoot.querySelector("action-bar action-bar-item:not(.hidden)"))
   }
