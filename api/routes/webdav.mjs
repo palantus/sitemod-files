@@ -251,7 +251,6 @@ export class DavFileSystem extends webdav.FileSystem {
   */
   
   _rename(pathFrom, newName, ctx, callback){
-    console.log("RENAME START")
     let ff = FileOrFolder.lookupByPath(pathFrom.toString())
     if(!ff) return callback(Errors.ResourceNotFound);
     if (!ff.hasAccess(ctx.context.user.user, 'w')) {
@@ -259,7 +258,6 @@ export class DavFileSystem extends webdav.FileSystem {
       return callback(Errors.BadAuthentication);
     }
     ff.name = newName;
-    console.log("RENAME")
     callback(null, true)
   }
 
