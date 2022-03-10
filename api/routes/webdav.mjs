@@ -13,9 +13,12 @@ export default (route, app) => {
     privilegeManager: privilegeManager,
     requireAuthentification: true
   });
-  server.setFileSystem('/', new DavFileSystem())
+  server.setFileSystem('/files', new DavFileSystem())
 
-  app.use(webdav.extensions.express('/webdav', server));
+  app.use(/*(req, res, next) => {
+    console.log(req.method, req.url)
+    next()
+  }, */webdav.extensions.express('/webdav', server));
 }
 
 class DavHTTPBasicAuthentication {
@@ -214,6 +217,50 @@ export class DavFileSystem extends webdav.FileSystem {
     }
     ff.delete();
     callback(null);
+  }
+
+  _move(pathFrom, pathTo, ctx, callback){
+    let ffFrom = FileOrFolder.lookupByPath(pathFrom.toString())
+    if(!ffFrom) return callback(Errors.ResourceNotFound);
+
+    if (!ffFrom.hasAccess(ctx.context.user.user, 'w')) {
+      console.log(`${ctx.context.user.user.id} doesn't have access to ${pathFrom.toString()}`)
+      return callback(Errors.BadAuthentication);
+    }
+
+    let ffTo = FileOrFolder.lookupByPath(pathTo.toString())
+    if(ffTo) return callback(Errors.ResourceAlreadyExists);
+    let parent = Folder.lookupByPath(pathTo.getParent().toString())
+    if(!parent) return callback(Errors.ResourceNotFound);
+
+    if (!parent.hasAccess(ctx.context.user.user, 'w')) {
+      console.log(`${ctx.context.user.user.id} doesn't have access to ${pathTo.toString()}`)
+      return callback(Errors.BadAuthentication);
+    }
+
+    ffFrom.rel(parent, "parent", true)
+    if(pathTo.fileName() && pathTo.fileName() != ffFrom.name)
+      ffFrom.name = pathTo.fileName()
+    callback(null, true)
+  }
+  
+  /*
+  _copy(pathFrom, pathTo, ctx, ){
+    
+  }
+  */
+  
+  _rename(pathFrom, newName, ctx, callback){
+    console.log("RENAME START")
+    let ff = FileOrFolder.lookupByPath(pathFrom.toString())
+    if(!ff) return callback(Errors.ResourceNotFound);
+    if (!ff.hasAccess(ctx.context.user.user, 'w')) {
+      console.log(`${ctx.context.user.user.id} doesn't have access to ${pathFrom.toString()}`)
+      return callback(Errors.BadAuthentication);
+    }
+    ff.name = newName;
+    console.log("RENAME")
+    callback(null, true)
   }
 
   _openWriteStream(path, ctx, callback) {

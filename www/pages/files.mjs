@@ -94,7 +94,7 @@ class Element extends HTMLElement {
     this.shadowRoot.getElementById("download-folder").addEventListener("click", this.downloadFolder)
     this.shadowRoot.getElementById("delete-all-btn").addEventListener("click", this.deleteAll)
     this.shadowRoot.getElementById("copy-webdav-btn").addEventListener("click", () => {
-      navigator.clipboard.writeText(`${siteURL()}/webdav${this.folderPath}`)
+      navigator.clipboard.writeText(`${siteURL()}/webdav/files${this.folderPath}`)
     })
     this.shadowRoot.querySelector('table tbody').addEventListener("click", this.tabClick)
 
