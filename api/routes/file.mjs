@@ -204,11 +204,15 @@ export default (app) => {
 
   route.patch('/:id', function (req, res, next) {
     if (!validateAccess(req, res, { permission: "file.edit" })) return;
-    let file = FileOrFolder.lookup(sanitize(req.params.id))
+    let file = FileOrFolder.lookup(sanitize(req.params.id))?.toType()
     if (!file) throw "Unknown file or folder"
     if(!file.validateAccess(res, 'w')) return;
 
-    if (req.body.name !== undefined && req.body.name) file.name = req.body.name
+    if (req.body.name !== undefined && req.body.name) {
+      file.name = req.body.name
+      if(file instanceof File)
+        file.updateMime()
+    }
     if (req.body.filename !== undefined && req.body.filename) file.name = req.body.filename
 
     let tagList = !req.body.tags ? null : Array.isArray(req.body.tags) ? req.body.tags : typeof req.body.tags === "string" ? req.body.tags.split(",").map(t => t.trim()) : null;

@@ -4,6 +4,9 @@ import {service as userService} from "../../../services/user.mjs"
 import Folder from "./folder.mjs";
 import ACL from "../../../models/acl.mjs"
 import DataType from "../../../models/datatype.mjs";
+import stream from "stream" ;
+import crypto from "crypto" ;
+import mime from "mime-types"
 
 export default class File extends Entity {
   
@@ -11,6 +14,7 @@ export default class File extends Entity {
     this.tag("file")
     
     this.name = name;
+    this.updateMime()
     this.size = isNaN(size) ? 0 : parseInt(size)
     this.hash = md5 || hash
     this.mime = mimetype || mime
@@ -51,6 +55,10 @@ export default class File extends Entity {
     return null;
   }
 
+  updateMime(){
+    this.mime = mime.lookup(this.name) || 'application/octet-stream'
+  }
+
   setExpiration(expire){
     if(expire && typeof expire === "string"){
       this.expire = expire
@@ -81,6 +89,22 @@ export default class File extends Entity {
     return "" + (acl.hasAccess(user, "r", shareKey)?'r':'') + (acl.hasAccess(user, "w", shareKey)?'w':'')
   }
 
+  async updateHash(){
+    if(!this.blob) return;
+    return new Promise(resolve => {
+      this.blob.pipe(new MD5Stream().on("hashed", hash => {
+        this.hash = hash
+        resolve(hash)
+      }))
+    })
+  }
+
+  static async calculateMissingHashes(){
+    for(let fb of FileBlob.search("tag:file !prop:hash blob")){
+      await fb.updateHash()
+    }
+  }
+
   toObj(user, shareKey){
     return {
       id: this._id,
@@ -98,5 +122,22 @@ export default class File extends Entity {
         raw: `${global.sitecore.apiURL}/file/raw/${this._id}${this.name ? `/${encodeURI(this.name)}` : ''}?token=${userService.getTempAuthToken(user)}`,
       }
     }
+  }
+}
+
+class MD5Stream extends stream.Writable{
+  constructor(){
+    super()
+    this._hasher = crypto.createHash( "md5" );
+    this.once( "finish", this._handleFinish.bind( this ) );
+  }
+
+  _handleFinish() {
+    this.emit( "hashed", this._hasher.digest( "hex" ) );
+  }
+
+  _write( chunk, encoding, writeComplete ) {
+    this._hasher.update( chunk, encoding );
+    writeComplete();
   }
 }

@@ -99,7 +99,12 @@ class Element extends HTMLElement {
 
     if(file.type == "file"){
       this.shadowRoot.getElementById('mime').setAttribute("value", file.mime)
-      this.shadowRoot.getElementById('size').setAttribute("value", file.size?`${Math.floor(file.size/1000)} KB`:"")
+
+      let sizeName = file.size < 1000 ? `${file.size} bytes`
+                   : file.size < 1000000 ? `${Math.floor(file.size/1000)} KB`
+                   : `${Math.floor(file.size/1000000)} MB`
+
+      this.shadowRoot.getElementById('size').setAttribute("value", sizeName)
       this.shadowRoot.getElementById('hash').setAttribute("value", file.hash)
     }
 

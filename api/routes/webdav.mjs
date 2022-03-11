@@ -239,8 +239,11 @@ export class DavFileSystem extends webdav.FileSystem {
     }
 
     ffFrom.rel(parent, "parent", true)
-    if(pathTo.fileName() && pathTo.fileName() != ffFrom.name)
+    if(pathTo.fileName() && pathTo.fileName() != ffFrom.name){
       ffFrom.name = pathTo.fileName()
+      if(ffFrom instanceof File)
+        ffFrom.updateMime()
+    }
     callback(null, true)
   }
   
@@ -258,17 +261,27 @@ export class DavFileSystem extends webdav.FileSystem {
       return callback(Errors.BadAuthentication);
     }
     ff.name = newName;
+    if(ff instanceof File)
+      ff.updateMime()
     callback(null, true)
+  }
+
+  _mimeType(path, ctx, callback){
+    let ff = FileOrFolder.lookupByPath(path.toString())
+    if(!ff instanceof File) return callback(null, '')
+    if(!ff.mime) ff.updateMime()
+    callback(null, ff.mime)
   }
 
   _openWriteStream(path, ctx, callback) {
     let ff = FileOrFolder.lookupByPath(path.toString())
-    if(!ff) return callback(Errors.ResourceNotFound);
+    if(!ff || !ff.tags.includes("file")) return callback(Errors.ResourceNotFound);
 
     ff.openBlob().then(stream => {
       stream.on("finish", async () => {
         let stats = await ff.blob.stats()
         ff.size = stats.size
+        ff.updateHash()
       })
       callback(null, stream)
     })
