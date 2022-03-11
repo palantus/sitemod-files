@@ -5,7 +5,7 @@ import File from "./models/file.mjs"
 
 export default async () => {
   // init
-  Role.lookupOrCreate("files").addPermission(["file.upload", "file.edit", "file.read"], true)
+  Role.lookupOrCreate("files").addPermission(["file.upload", "file.edit", "file.read", "file.drop"], true)
   Role.lookupOrCreate("admin").addPermission(["file.source.manage"], true)
 
   let folderType = DataType.lookupOrCreate("folder", {title: "Folder", permission: "file.read", api: "file", nameField: "name", uiPath: "folder", acl: "r:inherit;w:inherit", aclInheritance: true})

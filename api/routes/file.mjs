@@ -66,7 +66,7 @@ export default (app) => {
   })
 
   route.post(["/drop", "/drop/shared"], noGuest, (req, res, next) => {
-    if (!validateAccess(req, res, { permission: "file.upload" })) return;
+    if (!validateAccess(req, res, { permission: "file.drop" })) return;
     let expirationDate = new Date()
     expirationDate.setDate(expirationDate.getDate() + 30)
     let files = []
@@ -83,7 +83,7 @@ export default (app) => {
   })
 
   route.delete("/drop/all", noGuest, (req, res, next) => {
-    if (!validateAccess(req, res, { permission: "file.edit" })) return;
+    if (!validateAccess(req, res, { permission: "file.drop" })) return;
     FileOrFolder.allByTag("drop")
       .filter(f => f.hasAccess(res.locals.user, 'w'))
       .forEach(f => f.delete())
@@ -91,7 +91,7 @@ export default (app) => {
   })
 
   route.get("/drop", noGuest, function (req, res, next) {
-    if (!validateAccess(req, res, { permission: "file.read" })) return;
+    if (!validateAccess(req, res, { permission: "file.drop" })) return;
     let results = FileOrFolder.allByTag("drop")
                               .filter(f => f.hasAccess(res.locals.user, 'r', res.locals))
                               .map(c => ({
