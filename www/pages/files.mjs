@@ -320,9 +320,9 @@ export async function uploadNewFile(dialog, {tags = [], folder = null, callback}
       let tags = val.tag.split(",").map(t => t.trim())
       let files;
       if(folder){
-        await api.upload(`/file/folder/${folder.id}/upload?tags=${encodeURI(tags.join(","))}`, formData);
+        await api.upload(`file/folder/${folder.id}/upload?tags=${encodeURI(tags.join(","))}`, formData);
       } else {
-        await api.upload(`/file/tag/${tags[0]}/upload`, formData);
+        await api.upload(`file/tag/${tags[0]}/upload`, formData);
       }
       if(tags.length > 1){
         for(let f of files){

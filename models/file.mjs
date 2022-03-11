@@ -12,7 +12,7 @@ export default class File extends Entity {
   
   initNew({folder, name, size, md5, hash, mimetype, mime, tags, tag, data, expire, owner}){
     this.tag("file")
-    
+
     this.name = name;
     this.updateMime()
     this.size = isNaN(size) ? 0 : parseInt(size)
@@ -23,7 +23,7 @@ export default class File extends Entity {
     if(tag && typeof tag === "string")
       this.tag(`user-${tag}`)
     if(tags && Array.isArray(tags))
-      tags.forEach(t => this.tag(`user-${t}`))
+      tags.forEach(t => this.tag(t ? `user-${t}` : null))
     if(data)
       this.setBlob(data)
 
