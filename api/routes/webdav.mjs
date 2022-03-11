@@ -13,12 +13,12 @@ export default (route, app) => {
     privilegeManager: privilegeManager,
     requireAuthentification: true
   });
-  server.setFileSystem('/files', new DavFileSystem())
+  server.setFileSystem('/', new DavFileSystem())
 
   app.use(/*(req, res, next) => {
     console.log(req.method, req.url)
     next()
-  }, */webdav.extensions.express('/webdav', server));
+  }, */webdav.extensions.express('/webdav/files', server));
 }
 
 class DavHTTPBasicAuthentication {
@@ -266,14 +266,12 @@ export class DavFileSystem extends webdav.FileSystem {
     callback(null, true)
   }
 
-  /*
   _mimeType(path, ctx, callback){
     let ff = FileOrFolder.lookupByPath(path.toString())
     if(!ff instanceof File) return callback(null, '')
     if(!ff.mime) ff.updateMime()
     callback(null, ff.mime)
   }
-  */
 
   _openWriteStream(path, ctx, callback) {
     let ff = FileOrFolder.lookupByPath(path.toString())
