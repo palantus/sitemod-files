@@ -123,7 +123,7 @@ class Element extends HTMLElement {
                                 : await api.get(`file/path${encodeURI(this.folderPath)}`)
     if(!this.folder) return this.shadowRoot.querySelector('table tbody').innerHTML = ''
     this.shadowRoot.getElementById("folder-name").innerText = this.folder.parentPath == "/" && this.folder.name == "shared" ? "Shared files"
-                                                            : this.folder.parentPath == "/" ? "My files"
+                                                            : this.folder.parentPath == "/home" ? "My files"
                                                             : !this.folder.parentPath && !this.folder.name ? "Root"
                                                             : this.folder.name
     setPageTitle(!this.folder.parentPath ? "Files" : this.folder.name)
