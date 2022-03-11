@@ -21,6 +21,8 @@ export default (route, app) => {
   }, */webdav.extensions.express('/webdav/files', server));
 }
 
+let sanitizePath = path => typeof path === "string" ? path.replace(/[#]/g, "-") : path
+
 class DavHTTPBasicAuthentication {
   constructor(userManager, realm = 'realm') {
     this.userManager = userManager
@@ -130,15 +132,15 @@ class DavUserManager {
 
 export class DavPrivilegeManager extends webdav.PrivilegeManager {
   getRights(user, path) {
-    let file = FileOrFolder.lookupByPath(path.toString())
+    let file = FileOrFolder.lookupByPath(sanitizePath(path.toString()))
     if (!file)
-      file = Folder.lookupByPath(path.getParent()?.toString())
+      file = Folder.lookupByPath(sanitizePath(path.getParent()?.toString()))
     if(!file)
       return [];
 
     if (file.hasAccess(user.user, 'r')) {
       if (file.hasAccess(user.user, 'w')) {
-        //console.log(user.user.id, path.toString(), "w")
+        //console.log(user.user.id, sanitizePath(path.toString()), "w")
         return [
           'canRead',
           'canReadLocks',
@@ -154,7 +156,7 @@ export class DavPrivilegeManager extends webdav.PrivilegeManager {
           'canWriteContentSource'
         ]
       } else {
-        //console.log(user.user.id, path.toString(), "r")
+        //console.log(user.user.id, sanitizePath(path.toString()), "r")
         return [
           'canRead',
           'canReadLocks',
@@ -165,7 +167,7 @@ export class DavPrivilegeManager extends webdav.PrivilegeManager {
         ]
       }
     }
-    //console.log(user.user.id, path.toString(), "NONE")
+    //console.log(user.user.id, sanitizePath(path.toString()), "NONE")
     return []
   }
 
@@ -185,14 +187,14 @@ export class DavFileSystem extends webdav.FileSystem {
   static propertyManagers = new Map()
 
   _fastExistCheck(ctx, path, callback) {
-    callback((path && path.toString()) ? !!FileOrFolder.lookupByPath(path.toString()) : true);
+    callback((path && sanitizePath(path.toString())) ? !!FileOrFolder.lookupByPath(sanitizePath(path.toString())) : true);
   }
 
   _create(path, ctx, callback) {
-    let parent = Folder.lookupByPath(path.getParent().toString())
+    let parent = Folder.lookupByPath(sanitizePath(path.getParent().toString()))
     if(!parent) return callback(webdav.Errors.ResourceNotFound);
     if (!parent.hasAccess(ctx.context.user.user, 'w')) {
-      console.log(`${ctx.context.user.user.id} doesn't have access to ${path.toString()}`)
+      console.log(`${ctx.context.user.user.id} doesn't have access to ${sanitizePath(path.toString())}`)
       return callback(webdav.Errors.BadAuthentication);
     }
     if (parent.hasChildNamed(path.fileName())) return callback(webdav.Errors.ResourceAlreadyExists);
@@ -213,10 +215,10 @@ export class DavFileSystem extends webdav.FileSystem {
   }
 
   _delete(path, ctx, callback) {
-    let ff = FileOrFolder.lookupByPath(path.toString())
+    let ff = FileOrFolder.lookupByPath(sanitizePath(path.toString()))
     if(!ff) return callback(webdav.Errors.ResourceNotFound);
     if(!ff.hasAccess(ctx.context.user.user, 'w')) {
-      console.log(`${ctx.context.user.user.id} doesn't have access to ${path.toString()}`)
+      console.log(`${ctx.context.user.user.id} doesn't have access to ${sanitizePath(path.toString())}`)
       return callback(webdav.Errors.BadAuthentication);
     }
     ff.delete();
@@ -224,21 +226,21 @@ export class DavFileSystem extends webdav.FileSystem {
   }
 
   _move(pathFrom, pathTo, ctx, callback){
-    let ffFrom = FileOrFolder.lookupByPath(pathFrom.toString())
+    let ffFrom = FileOrFolder.lookupByPath(sanitizePath(pathFrom.toString()))
     if(!ffFrom) return callback(webdav.Errors.ResourceNotFound);
 
     if (!ffFrom.hasAccess(ctx.context.user.user, 'w')) {
-      console.log(`${ctx.context.user.user.id} doesn't have access to ${pathFrom.toString()}`)
+      console.log(`${ctx.context.user.user.id} doesn't have access to ${sanitizePath(pathFrom.toString())}`)
       return callback(webdav.Errors.BadAuthentication);
     }
 
-    let ffTo = FileOrFolder.lookupByPath(pathTo.toString())
+    let ffTo = FileOrFolder.lookupByPath(sanitizePath(pathTo.toString()))
     if(ffTo) return callback(webdav.Errors.ResourceAlreadyExists);
-    let parent = Folder.lookupByPath(pathTo.getParent().toString())
+    let parent = Folder.lookupByPath(sanitizePath(pathTo.getParent().toString()))
     if(!parent) return callback(webdav.Errors.ResourceNotFound);
 
     if (!parent.hasAccess(ctx.context.user.user, 'w')) {
-      console.log(`${ctx.context.user.user.id} doesn't have access to ${pathTo.toString()}`)
+      console.log(`${ctx.context.user.user.id} doesn't have access to ${sanitizePath(pathTo.toString())}`)
       return callback(webdav.Errors.BadAuthentication);
     }
 
@@ -258,10 +260,10 @@ export class DavFileSystem extends webdav.FileSystem {
   */
   
   _rename(pathFrom, newName, ctx, callback){
-    let ff = FileOrFolder.lookupByPath(pathFrom.toString())
+    let ff = FileOrFolder.lookupByPath(sanitizePath(pathFrom.toString()))
     if(!ff) return callback(webdav.Errors.ResourceNotFound);
     if (!ff.hasAccess(ctx.context.user.user, 'w')) {
-      console.log(`${ctx.context.user.user.id} doesn't have access to ${pathFrom.toString()}`)
+      console.log(`${ctx.context.user.user.id} doesn't have access to ${sanitizePath(pathFrom.toString())}`)
       return callback(webdav.Errors.BadAuthentication);
     }
     ff.name = newName;
@@ -271,14 +273,14 @@ export class DavFileSystem extends webdav.FileSystem {
   }
 
   _mimeType(path, ctx, callback){
-    let ff = FileOrFolder.lookupByPath(path.toString())
+    let ff = FileOrFolder.lookupByPath(sanitizePath(path.toString()))
     if(!ff instanceof File) return callback(null, '')
     if(!ff.mime) ff.updateMime()
     callback(null, ff.mime)
   }
 
   _openWriteStream(path, ctx, callback) {
-    let ff = FileOrFolder.lookupByPath(path.toString())
+    let ff = FileOrFolder.lookupByPath(sanitizePath(path.toString()))
     if(!ff || !ff.tags.includes("file")) return callback(webdav.Errors.ResourceNotFound);
 
     ff.openBlob().then(stream => {
@@ -292,7 +294,7 @@ export class DavFileSystem extends webdav.FileSystem {
   }
 
   _openReadStream(path, ctx, callback) {
-    let file = FileOrFolder.lookupByPath(path.toString())
+    let file = FileOrFolder.lookupByPath(sanitizePath(path.toString()))
     if (!file || !(file instanceof File))
       return callback(webdav.Errors.ResourceNotFound);
 
@@ -300,47 +302,47 @@ export class DavFileSystem extends webdav.FileSystem {
   }
 
   _size(path, ctx, callback) {
-    let file = FileOrFolder.lookupByPath(path.toString())
+    let file = FileOrFolder.lookupByPath(sanitizePath(path.toString()))
     callback(null, file.size || 0)
   }
 
   _lockManager(path, ctx, callback) {
-    let pathString = path.toString()
+    let pathString = sanitizePath(path.toString())
     if (!DavFileSystem.lockManagers.has(pathString))
       DavFileSystem.lockManagers.set(pathString, new DavLockManager())
     callback(null, DavFileSystem.lockManagers.get(pathString))
   }
 
   _propertyManager(path, ctx, callback) {
-    let pathString = path.toString()
+    let pathString = sanitizePath(path.toString())
     if (!DavFileSystem.propertyManagers.has(pathString))
       DavFileSystem.propertyManagers.set(pathString, new DavPropertyManager())
     callback(null, DavFileSystem.propertyManagers.get(pathString))
   }
 
   _readDir(path, ctx, callback) {
-    let folder = FileOrFolder.lookupByPath(path.toString())
+    let folder = FileOrFolder.lookupByPath(sanitizePath(path.toString()))
     if (!folder || !(folder instanceof Folder))
       return callback(webdav.Errors.ResourceNotFound);
     callback(null, folder.content.filter(c => c.hasAccess(ctx.context.user.user, 'r')).map(c => c.name));
   }
 
   _creationDate(path, ctx, callback) {
-    let file = FileOrFolder.lookupByPath(path.toString())
+    let file = FileOrFolder.lookupByPath(sanitizePath(path.toString()))
     if (!file)
       return callback(webdav.Errors.ResourceNotFound);
     callback(null, file.timestamp ? new Date(file.timestamp).getTime() : 0)
   }
   
   _lastModifiedDate(path, ctx, callback) {
-    let file = FileOrFolder.lookupByPath(path.toString())
+    let file = FileOrFolder.lookupByPath(sanitizePath(path.toString()))
     if (!file)
       return callback(webdav.Errors.ResourceNotFound);
     callback(null, file.timestamp ? new Date(file.timestamp).getTime() : 0)
   }
   
   _type(path, ctx, callback) {
-    let file = FileOrFolder.lookupByPath(path.toString())
+    let file = FileOrFolder.lookupByPath(sanitizePath(path.toString()))
     if (!file)
       return callback(webdav.Errors.ResourceNotFound);
     callback(null, file.tags.includes("folder") ? ResourceType.Directory : ResourceType.File)
