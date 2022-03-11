@@ -113,6 +113,7 @@ export default class File extends Entity {
       size: this.size || null,
       hash: this.hash || null,
       mime: this.mime || null,
+      ownerId: this.related.owner?.id || null,
       tags: this.tags.filter(t => t.startsWith("user-")).map(t => t.substr(5)),
       parentPath: this.parentPath,
       rights: this.rights(user, shareKey),

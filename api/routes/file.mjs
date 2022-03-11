@@ -145,7 +145,15 @@ export default (app) => {
     if (!parent) throw "Parent doesn't exist";
     if (!parent.validateAccess(res, 'w')) return;
     if (parent.hasChildNamed(sanitize(req.body.name))) throw "A file or folder with that name already exists"
-    let child = new Folder(req.body.name, res.locals.user, parent)
+    let child = null;
+    if(req.body.linkTo && !isNaN(req.body.linkTo)){
+      let linkTo = Folder.lookup(sanitize(req.body.linkTo))
+      if (!linkTo) throw "Link destination doesn't exist";
+      if (!linkTo.validateAccess(res, 'r')) return;
+      child = new Folder(req.body.name, res.locals.user, parent, {linkTo})
+    } else {
+      child = new Folder(req.body.name, res.locals.user, parent)
+    }
     res.json(child.toObj(res.locals.user, res.locals.shareKey))
   })
 

@@ -186,12 +186,12 @@ export class DavFileSystem extends webdav.FileSystem {
 
   _create(path, ctx, callback) {
     let parent = Folder.lookupByPath(path.getParent().toString())
-    if(!parent) return callback(Errors.ResourceNotFound);
+    if(!parent) return callback(webdav.Errors.ResourceNotFound);
     if (!parent.hasAccess(ctx.context.user.user, 'w')) {
       console.log(`${ctx.context.user.user.id} doesn't have access to ${path.toString()}`)
-      return callback(Errors.BadAuthentication);
+      return callback(webdav.Errors.BadAuthentication);
     }
-    if (parent.hasChildNamed(path.fileName())) return callback(Errors.ResourceAlreadyExists);
+    if (parent.hasChildNamed(path.fileName())) return callback(webdav.Errors.ResourceAlreadyExists);
 
     if (ctx.type.isDirectory) {
       new Folder(path.fileName(), ctx.context.user.user, parent)
@@ -210,10 +210,10 @@ export class DavFileSystem extends webdav.FileSystem {
 
   _delete(path, ctx, callback) {
     let ff = FileOrFolder.lookupByPath(path.toString())
-    if(!ff) return callback(Errors.ResourceNotFound);
+    if(!ff) return callback(webdav.Errors.ResourceNotFound);
     if(!ff.hasAccess(ctx.context.user.user, 'w')) {
       console.log(`${ctx.context.user.user.id} doesn't have access to ${path.toString()}`)
-      return callback(Errors.BadAuthentication);
+      return callback(webdav.Errors.BadAuthentication);
     }
     ff.delete();
     callback(null);
@@ -221,21 +221,21 @@ export class DavFileSystem extends webdav.FileSystem {
 
   _move(pathFrom, pathTo, ctx, callback){
     let ffFrom = FileOrFolder.lookupByPath(pathFrom.toString())
-    if(!ffFrom) return callback(Errors.ResourceNotFound);
+    if(!ffFrom) return callback(webdav.Errors.ResourceNotFound);
 
     if (!ffFrom.hasAccess(ctx.context.user.user, 'w')) {
       console.log(`${ctx.context.user.user.id} doesn't have access to ${pathFrom.toString()}`)
-      return callback(Errors.BadAuthentication);
+      return callback(webdav.Errors.BadAuthentication);
     }
 
     let ffTo = FileOrFolder.lookupByPath(pathTo.toString())
-    if(ffTo) return callback(Errors.ResourceAlreadyExists);
+    if(ffTo) return callback(webdav.Errors.ResourceAlreadyExists);
     let parent = Folder.lookupByPath(pathTo.getParent().toString())
-    if(!parent) return callback(Errors.ResourceNotFound);
+    if(!parent) return callback(webdav.Errors.ResourceNotFound);
 
     if (!parent.hasAccess(ctx.context.user.user, 'w')) {
       console.log(`${ctx.context.user.user.id} doesn't have access to ${pathTo.toString()}`)
-      return callback(Errors.BadAuthentication);
+      return callback(webdav.Errors.BadAuthentication);
     }
 
     ffFrom.rel(parent, "parent", true)
@@ -255,10 +255,10 @@ export class DavFileSystem extends webdav.FileSystem {
   
   _rename(pathFrom, newName, ctx, callback){
     let ff = FileOrFolder.lookupByPath(pathFrom.toString())
-    if(!ff) return callback(Errors.ResourceNotFound);
+    if(!ff) return callback(webdav.Errors.ResourceNotFound);
     if (!ff.hasAccess(ctx.context.user.user, 'w')) {
       console.log(`${ctx.context.user.user.id} doesn't have access to ${pathFrom.toString()}`)
-      return callback(Errors.BadAuthentication);
+      return callback(webdav.Errors.BadAuthentication);
     }
     ff.name = newName;
     if(ff instanceof File)
@@ -275,7 +275,7 @@ export class DavFileSystem extends webdav.FileSystem {
 
   _openWriteStream(path, ctx, callback) {
     let ff = FileOrFolder.lookupByPath(path.toString())
-    if(!ff || !ff.tags.includes("file")) return callback(Errors.ResourceNotFound);
+    if(!ff || !ff.tags.includes("file")) return callback(webdav.Errors.ResourceNotFound);
 
     ff.openBlob().then(stream => {
       stream.on("finish", async () => {

@@ -6,11 +6,15 @@ import User from "../../../models/user.mjs";
 import { getTimestamp } from "../../../tools/date.mjs";
 
 class Folder extends Entity {
-  initNew(name, owner, parentFolder){
+  initNew(name, owner, parentFolder, {linkTo = null} = {}){
     this.tag("folder")
     this.name = name;
     this.timestamp = getTimestamp()
     this.rel(parentFolder, "parent")
+    if(linkTo) {
+      this.tag("symboliclink");
+      this.rel(linkTo, "destination")
+    }
 
     ACL.setDefaultACLOnEntity(this, owner.id == "guest" && parentFolder ? parentFolder.related.owner : owner, DataType.lookup("folder"))
   }
@@ -35,8 +39,13 @@ class Folder extends Entity {
     return Folder.search("tag:folder !content..tag:folder").map(c => FileOrFolder.from(c).toType())
   }
 
+  isSymbolicLink(){
+    return this.tags.includes("symboliclink")
+  }
+
   get content(){
-    return this.relsrev.parent?.map(c => FileOrFolder.from(c).toType()) || []
+    return this.isSymbolicLink() ? Folder.from(this.related.destination)?.content || []
+                                 : this.relsrev.parent?.map(c => FileOrFolder.from(c).toType()) || []
   }
 
   getChildFolderNamed(name){
@@ -75,16 +84,20 @@ class Folder extends Entity {
       id: this._id,
       type: "folder",
       name: this.name,
+      ownerId: this.related.owner?.id || null,
       tags: this.tags.filter(t => t.startsWith("user-")).map(t => t.substr(5)),
       rights: this.rights(user, shareKey),
       parentPath: this.parentPath,
-      content: includeContent ? this.content.filter(c => c.hasAccess(user, 'r', shareKey)).map(c => c.toObj(user, shareKey, false)) : undefined
+      content: includeContent ? this.content.filter(c => c.hasAccess(user, 'r', shareKey)).map(c => c.toObj(user, shareKey, false)) : undefined,
+      isSymbolic: this.isSymbolicLink()
     }
   }
 
   delete(){
     if(this.tags.includes("root") || this.tags.includes("sharedroot") || this.tags.includes("userroot")) return;
-    this.content.forEach(c => c.delete())
+    if(!this.isSymbolicLink()){
+      this.content.forEach(c => c.delete())
+    }
     super.delete()
   }
 

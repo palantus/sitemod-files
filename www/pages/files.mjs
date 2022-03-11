@@ -45,6 +45,7 @@ template.innerHTML = `
   <action-bar class="hidden">
       <action-bar-item id="new-btn" class="hidden">Upload file(s)</action-bar-item>
       <action-bar-item id="add-folder" class="hidden">Add folder</action-bar-item>
+      <action-bar-item id="create-symbolic-link-btn" class="hidden">Show in my files</action-bar-item>
 
       <action-bar-item id="options-menu" class="hidden">
         <action-bar-menu label="Options">
@@ -73,6 +74,11 @@ template.innerHTML = `
   <dialog-component title="Add folder" id="add-folder-dialog">
     <field-component label="Name"><input id="add-name"></input></field-component>
   </dialog-component>
+  
+  <dialog-component title="Add link" id="add-link-dialog">
+    <p>A virtual folder will be created among your files. When opening it, the contents of this folder is shown. You can delete the link, without deleing this folder. The name doesn't have to be the same</p>
+    <field-component label="Name"><input id="link-name"></input></field-component>
+  </dialog-component>
 `;
 
 class Element extends HTMLElement {
@@ -88,11 +94,13 @@ class Element extends HTMLElement {
     this.downloadFolder = this.downloadFolder.bind(this);
     this.deleteAll = this.deleteAll.bind(this);
     this.tabClick = this.tabClick.bind(this)
+    this.createSymbolicLink = this.createSymbolicLink.bind(this)
     
     this.shadowRoot.getElementById("new-btn").addEventListener("click", this.uploadFile)
     this.shadowRoot.getElementById("add-folder").addEventListener("click", this.addFolder)
     this.shadowRoot.getElementById("download-folder").addEventListener("click", this.downloadFolder)
     this.shadowRoot.getElementById("delete-all-btn").addEventListener("click", this.deleteAll)
+    this.shadowRoot.getElementById("create-symbolic-link-btn").addEventListener("click", this.createSymbolicLink)
     this.shadowRoot.getElementById("copy-webdav-btn").addEventListener("click", () => {
       navigator.clipboard.writeText(`${siteURL()}/webdav/files${this.folderPath}`)
     })
@@ -124,7 +132,7 @@ class Element extends HTMLElement {
                               : a.type == "folder" ? -1 : 1
     }).map(f => `
         <tr class="result ${f.type}" data-id="${f.id}" data-name="${f.name}">
-          <td><img style="width: 20px;" src="/img/${f.type == "folder" ? "folder.svg" : "file.png"}"></td>
+          <td><img style="width: 20px;" src="/img/${f.type == "folder" ? (f.isSymbolic ? "folder-link.png" : "folder.png") : "file.png"}"></td>
           <td><field-ref ref="${f.type == "folder" ? (this.folderId ? `/folder/${f.id}` : `/files${(f.parentPath&&f.parentPath!="/") ? encodeURI(f.parentPath):""}/${encodeURI(f.name)}`) : `/file/${f.id}`}">${f.name}</field-ref></td>
           <td>
             <img title="Show info" class="info iconbtn" src="/img/info.png">
@@ -146,6 +154,9 @@ class Element extends HTMLElement {
       this.shadowRoot.getElementById("add-folder").classList.remove("hidden")
       this.shadowRoot.getElementById("delete-all-btn").classList.remove("hidden")
       this.shadowRoot.getElementById("copy-webdav-btn").classList.remove("hidden")
+    }
+    if(permissions.includes("file.edit") && this.folder.ownerId != user.id){
+      this.shadowRoot.getElementById("create-symbolic-link-btn").classList.remove("hidden")
     }
     this.shadowRoot.querySelector("action-bar").classList.toggle("hidden", !!!this.shadowRoot.querySelector("action-bar action-bar-item:not(.hidden)"))
   }
@@ -172,6 +183,33 @@ class Element extends HTMLElement {
         : true,
       values: () => {return {
         name: this.shadowRoot.getElementById("add-name").value
+      }},
+      close: () => {
+        this.shadowRoot.querySelectorAll("field-component input").forEach(e => e.value = '')
+      }
+    })
+  }
+
+  createSymbolicLink(){
+    if(!this.folder) return;
+
+    let dialog = this.shadowRoot.getElementById("add-link-dialog")
+    this.shadowRoot.getElementById("link-name").value = this.folder.name
+    
+    showDialog(dialog, {
+      show: () => this.shadowRoot.getElementById("link-name").focus(),
+      ok: async (val) => {
+        let homeFolder = await api.get(`file/path/home/${user.id}`)
+        if(!homeFolder) return alertDialog("You do not have a home");
+        await api.post(`file/${homeFolder.id}/folders`, val)
+        this.refreshData()
+      },
+      validate: (val) => 
+          !val.name ? "Please fill out name"
+        : true,
+      values: () => {return {
+        name: this.shadowRoot.getElementById("link-name").value,
+        linkTo: this.folder.id
       }},
       close: () => {
         this.shadowRoot.querySelectorAll("field-component input").forEach(e => e.value = '')
