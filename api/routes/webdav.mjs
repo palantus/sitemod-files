@@ -266,12 +266,14 @@ export class DavFileSystem extends webdav.FileSystem {
     callback(null, true)
   }
 
+  /*
   _mimeType(path, ctx, callback){
     let ff = FileOrFolder.lookupByPath(path.toString())
     if(!ff instanceof File) return callback(null, '')
     if(!ff.mime) ff.updateMime()
     callback(null, ff.mime)
   }
+  */
 
   _openWriteStream(path, ctx, callback) {
     let ff = FileOrFolder.lookupByPath(path.toString())
@@ -335,7 +337,6 @@ export class DavFileSystem extends webdav.FileSystem {
     callback(null, file.timestamp ? new Date(file.timestamp).getTime() : 0)
   }
   
-
   _type(path, ctx, callback) {
     let file = FileOrFolder.lookupByPath(path.toString())
     if (!file)
