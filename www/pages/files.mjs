@@ -155,7 +155,7 @@ class Element extends HTMLElement {
       this.shadowRoot.getElementById("delete-all-btn").classList.remove("hidden")
       this.shadowRoot.getElementById("copy-webdav-btn").classList.remove("hidden")
     }
-    if(permissions.includes("file.edit") && this.folder.ownerId != user.id){
+    if(permissions.includes("file.edit") && user?.id != "guest" && this.folder.ownerId != user?.id){
       this.shadowRoot.getElementById("create-symbolic-link-btn").classList.remove("hidden")
     }
     this.shadowRoot.querySelector("action-bar").classList.toggle("hidden", !!!this.shadowRoot.querySelector("action-bar action-bar-item:not(.hidden)"))
