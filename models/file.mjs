@@ -13,7 +13,7 @@ export default class File extends Entity {
   initNew({folder, name, size, md5, hash, mimetype, mime, tags, tag, data, expire, owner}){
     this.tag("file")
 
-    this.name = name;
+    this.name = (name||"NewFile").replace(/[\/#]/g, '-')
     this.updateMime()
     this.size = isNaN(size) ? 0 : parseInt(size)
     this.hash = md5 || hash

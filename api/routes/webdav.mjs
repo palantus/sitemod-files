@@ -94,8 +94,10 @@ class DavUser {
 class DavUserManager {
   getUserByName(name, callback) {
     let user = User.lookup(name)
-    if (!user)
+    if (!user){
+      console.log(`Webdav error: User '${name}' not found`)
       callback(webdav.Errors.UserNotFound);
+    }
     else
       callback(null, new DavUser(user));
   }
@@ -117,8 +119,10 @@ class DavUserManager {
     let user = User.lookup(name)
     if (user && user.active && user.hasPassword() && user.validatePassword(password))
       callback(null, new DavUser(user));
-    else
+    else {
+      console.log(`Webdav error: User '${name}' not found with matching password`)
       callback(webdav.Errors.UserNotFound);
+    }
   }
 }
 
@@ -181,7 +185,7 @@ export class DavFileSystem extends webdav.FileSystem {
   static propertyManagers = new Map()
 
   _fastExistCheck(ctx, path, callback) {
-    callback(path ? !!FileOrFolder.lookupByPath(path.toString()) : true);
+    callback((path && path.toString()) ? !!FileOrFolder.lookupByPath(path.toString()) : true);
   }
 
   _create(path, ctx, callback) {

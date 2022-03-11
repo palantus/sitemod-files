@@ -96,7 +96,7 @@ export default (app) => {
                               .filter(f => f.hasAccess(res.locals.user, 'r', res.locals))
                               .map(c => ({
                                 ...c.toObj(res.locals.user, res.locals.shareKey), 
-                                dropLink: `${global.sitecore.apiURL}/file/raw/${c._id}${c.name ? `/${encodeURI(c.name)}` : ''}?shareKey=${c.shareKey}`
+                                dropLink: `${global.sitecore.apiURL}/file/raw/${c._id}${c.name ? `/${encodeURI(c.name.replace("#", ""))}` : ''}?shareKey=${c.shareKey}`
                               }))
     res.json(results)
   })
@@ -216,8 +216,8 @@ export default (app) => {
     if (!file) throw "Unknown file or folder"
     if(!file.validateAccess(res, 'w')) return;
 
-    if (req.body.name !== undefined && req.body.name) {
-      file.name = req.body.name
+    if (req.body.name && typeof req.body.name === "string") {
+      file.name = req.body.name.replace(/[\/#]/g, '-')
       if(file instanceof File)
         file.updateMime()
     }

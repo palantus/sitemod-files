@@ -8,7 +8,7 @@ import { getTimestamp } from "../../../tools/date.mjs";
 class Folder extends Entity {
   initNew(name, owner, parentFolder, {linkTo = null} = {}){
     this.tag("folder")
-    this.name = name;
+    this.name = (name||"NewFolder").replace(/[\/#]/g, '-');
     this.timestamp = getTimestamp()
     this.rel(parentFolder, "parent")
     if(linkTo) {
