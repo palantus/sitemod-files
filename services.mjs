@@ -2,6 +2,7 @@ import Role from "../../models/role.mjs"
 import DataType from "../../models/datatype.mjs"
 import Folder from "./models/folder.mjs"
 import File from "./models/file.mjs"
+import { startCleanupService } from "./services/cleanup.mjs"
 
 export default async () => {
   // init
@@ -17,5 +18,6 @@ export default async () => {
   Folder.root().acl = "r:shared;w:private"
 
   return {
+    cleanup: startCleanupService()
   }
 }
