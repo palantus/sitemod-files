@@ -1,4 +1,4 @@
-import Entity from "entitystorage"
+import Entity, {query} from "entitystorage"
 import { getTimestamp } from "../../../tools/date.mjs";
 import {service as userService} from "../../../services/user.mjs"
 import Folder from "./folder.mjs";
@@ -34,12 +34,12 @@ export default class File extends Entity {
 
   static lookup(id) {
     if(!id) return null;
-    return File.find(`id:"${id}" tag:file !tag:folder`)
+    return query.type(File).tag("file").id(id).not(query.tag("folder")).first
   }
 
   static lookupHash(hash) {
     if(!hash) return null;
-    return File.find(`prop:"hash=${hash}" tag:file !tag:folder`)
+    return query.type(File).tag("file").prop("hash", hash).not(query.tag("folder")).first
   }
 
   static lookupAccessible(idOrHash, user, shareKey){
@@ -47,7 +47,7 @@ export default class File extends Entity {
     let file = !isNaN(idOrHash) ? File.lookup(idOrHash) : null
     if(file && file.hasAccess(user, 'r', shareKey)) return file;
     if(isNaN(idOrHash)){
-      for(let file of File.search(`prop:"hash=${idOrHash}" tag:file !tag:folder`)){
+      for(let file of query.type(File).tag("file").prop("hash", idOrHash).not(query.tag("folder")).all){
         if(file.hasAccess(user, 'r', shareKey)) 
           return file;
       }

@@ -1,4 +1,4 @@
-import Entity from "entitystorage"
+import Entity, {query} from "entitystorage"
 import File from "./file.mjs";
 import Folder from "./folder.mjs";
 
@@ -6,7 +6,7 @@ export default class FileOrFolder extends Entity {
   
   static lookup(id) {
     if(!id) return null;
-    return FileOrFolder.find(`id:"${id}" (tag:file|tag:folder)`)
+    return query.type(FileOrFolder).id(id).and(query.tag("file").or(query.tag("folder"))).first
   }
 
   static lookupAccessible(idOrHash, user, shareKey){
@@ -35,7 +35,7 @@ export default class FileOrFolder extends Entity {
 
   static allByTag(tag) {
     if(!tag) return [];
-    return FileOrFolder.search(`tag:"user-${tag}" (tag:file|tag:folder)`)
+    return query.type(FileOrFolder).tag(`user-${tag}`).and(query.tag("file").or(query.tag("folder"))).all
   }
 
   delete(){

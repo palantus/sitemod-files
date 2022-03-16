@@ -1,4 +1,4 @@
-import Entity from "entitystorage"
+import Entity, {query} from "entitystorage"
 import FileOrFolder from "./fileorfolder.mjs";
 import ACL from "../../../models/acl.mjs"
 import DataType from "../../../models/datatype.mjs";
@@ -21,12 +21,12 @@ class Folder extends Entity {
   
   static lookup(id) {
     if(!id) return null;
-    return Folder.find(`id:"${id}" tag:folder`)
+    return query.type(Folder).id(id).tag("folder").first
   }
 
   static lookupHash(hash) {
     if(!id) return null;
-    return File.find(`prop:"hash=${hash}" tag:folder`)
+    return query.type(Folder).prop("hash", hash).tag("folder").first
   }
 
   static lookupByPath(path){
@@ -102,14 +102,14 @@ class Folder extends Entity {
   }
 
   static root(){
-    return Folder.find("tag:root tag:folder") 
+    return query.type(Folder).tag("root").tag("folder").first
       || new Folder("", User.lookupAdmin())
             .tag("root")
             .prop("acl", "r:shared;w:private")
   }
 
   static homeRoot(){
-    return Folder.find("tag:homeroot tag:folder") 
+    return query.type(Folder).tag("homeroot").tag("folder").first
       || new Folder("home", User.lookupAdmin(), Folder.root())
             .tag("homeroot")
             .prop("acl", "r:shared;w:private")
@@ -117,14 +117,14 @@ class Folder extends Entity {
 
   static userRoot(user){
     if(!user || user.id == "guest") return null;
-    return Folder.find(`tag:userroot tag:folder owner.id:${user}`) 
+    return query.type(Folder).tag("userroot").tag("folder").relatedTo(user, "owner").first
       || new Folder(user.id, user, Folder.homeRoot())
             .tag("userroot")
             .prop("acl", "r:private;w:private")
   }
 
   static sharedRoot(){
-    return Folder.find("tag:sharedroot tag:folder") 
+    return query.type(Folder).tag("sharedroot").tag("folder").first
       || new Folder("shared", User.lookupAdmin(), Folder.root())
             .tag("sharedroot")
             .prop("acl", "r:shared;w:shared")

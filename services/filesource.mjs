@@ -1,9 +1,9 @@
 import fetch from "node-fetch"
-import Entity from "entitystorage"
+import {query} from "entitystorage"
 
 class FileSourceService{
   static async findFileAll(id){
-    let promiseResults = await Promise.all(Entity.search(`tag:filesource`).map(fs => {
+    let promiseResults = await Promise.all(query.tag("filesource").all.map(fs => {
       return new Promise(async resolve => {
         let exists = false;
         let res;
