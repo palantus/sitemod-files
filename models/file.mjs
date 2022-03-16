@@ -1,30 +1,30 @@
-import Entity, {query} from "entitystorage"
+import Entity, { query } from "entitystorage"
 import { getTimestamp } from "../../../tools/date.mjs";
-import {service as userService} from "../../../services/user.mjs"
+import { service as userService } from "../../../services/user.mjs"
 import Folder from "./folder.mjs";
 import ACL from "../../../models/acl.mjs"
 import DataType from "../../../models/datatype.mjs";
-import stream from "stream" ;
-import crypto from "crypto" ;
+import stream from "stream";
+import crypto from "crypto";
 import mime from "mime-types"
 
 export default class File extends Entity {
-  
-  initNew({folder, name, size, md5, hash, mimetype, mime, tags, tag, data, expire, owner}){
+
+  initNew({ folder, name, size, md5, hash, mimetype, mime, tags, tag, data, expire, owner }) {
     this.tag("file")
 
-    this.name = (name||"NewFile").replace(/[\/#]/g, '-')
+    this.name = (name || "NewFile").replace(/[\/#]/g, '-')
     this.updateMime()
     this.size = isNaN(size) ? 0 : parseInt(size)
     this.hash = md5 || hash
     this.mime = mimetype || mime
     this.timestamp = getTimestamp()
     this.setExpiration(expire)
-    if(tag && typeof tag === "string")
+    if (tag && typeof tag === "string")
       this.tag(`user-${tag}`)
-    if(tags && Array.isArray(tags))
+    if (tags && Array.isArray(tags))
       tags.forEach(t => this.tag(t ? `user-${t}` : null))
-    if(data)
+    if (data)
       this.setBlob(data)
 
     this.rel(folder, "parent")
@@ -33,34 +33,34 @@ export default class File extends Entity {
   }
 
   static lookup(id) {
-    if(!id) return null;
+    if (!id) return null;
     return query.type(File).tag("file").id(id).not(query.tag("folder")).first
   }
 
   static lookupHash(hash) {
-    if(!hash) return null;
+    if (!hash) return null;
     return query.type(File).tag("file").prop("hash", hash).not(query.tag("folder")).first
   }
 
-  static lookupAccessible(idOrHash, user, shareKey){
-    if(!idOrHash) return null;
+  static lookupAccessible(idOrHash, user, shareKey) {
+    if (!idOrHash) return null;
     let file = !isNaN(idOrHash) ? File.lookup(idOrHash) : null
-    if(file && file.hasAccess(user, 'r', shareKey)) return file;
-    if(isNaN(idOrHash)){
-      for(let file of query.type(File).tag("file").prop("hash", idOrHash).not(query.tag("folder")).all){
-        if(file.hasAccess(user, 'r', shareKey)) 
+    if (file && file.hasAccess(user, 'r', shareKey)) return file;
+    if (isNaN(idOrHash)) {
+      for (let file of query.type(File).tag("file").prop("hash", idOrHash).not(query.tag("folder")).all) {
+        if (file.hasAccess(user, 'r', shareKey))
           return file;
       }
     }
     return null;
   }
 
-  updateMime(){
+  updateMime() {
     this.mime = mime.lookup(this.name) || 'application/octet-stream'
   }
 
-  setExpiration(expire){
-    if(expire && typeof expire === "string"){
+  setExpiration(expire) {
+    if (expire && typeof expire === "string") {
       this.expire = expire
       this.tag("temp")
     } else {
@@ -69,28 +69,28 @@ export default class File extends Entity {
     }
   }
 
-  get parentPath(){
+  get parentPath() {
     let parent = this.related.parent
-    if(!parent) return null;
+    if (!parent) return null;
     let parentPath = Folder.from(parent).parentPath
-    return `${parentPath}${parentPath?.endsWith("/")?"":"/"}${parent.name}`
+    return `${parentPath}${parentPath?.endsWith("/") ? "" : "/"}${parent.name}`
   }
 
-  hasAccess(user, right = 'r', shareKey = null){
+  hasAccess(user, right = 'r', shareKey = null) {
     return new ACL(this, DataType.lookup("file")).hasAccess(user, right, shareKey)
   }
 
-  validateAccess(res, right, respondIfFalse = true){
+  validateAccess(res, right, respondIfFalse = true) {
     return new ACL(this, DataType.lookup("file")).validateAccess(res, right, respondIfFalse)
   }
 
-  rights(user, shareKey){
+  rights(user, shareKey) {
     let acl = new ACL(this, DataType.lookup("file"))
-    return "" + (acl.hasAccess(user, "r", shareKey)?'r':'') + (acl.hasAccess(user, "w", shareKey)?'w':'')
+    return "" + (acl.hasAccess(user, "r", shareKey) ? 'r' : '') + (acl.hasAccess(user, "w", shareKey) ? 'w' : '')
   }
 
-  async updateHash(){
-    if(!this.blob) return;
+  async updateHash() {
+    if (!this.blob) return;
     return new Promise(resolve => {
       this.blob.pipe(new MD5Stream().on("hashed", hash => {
         this.hash = hash
@@ -99,13 +99,19 @@ export default class File extends Entity {
     })
   }
 
-  static async calculateMissingHashes(){
-    for(let fb of FileBlob.search("tag:file !prop:hash blob")){
+  static async calculateMissingHashes() {
+    for (let fb of FileBlob.search("tag:file !prop:hash blob")) {
       await fb.updateHash()
     }
   }
 
-  toObj(user, shareKey){
+  static allByTag(tag) {
+    if (!tag) return [];
+    return query.type(File).tag(`user-${tag}`).tag("file").all
+  }
+
+
+  toObj(user, shareKey) {
     return {
       id: this._id,
       type: "file",
@@ -126,19 +132,19 @@ export default class File extends Entity {
   }
 }
 
-class MD5Stream extends stream.Writable{
-  constructor(){
+class MD5Stream extends stream.Writable {
+  constructor() {
     super()
-    this._hasher = crypto.createHash( "md5" );
-    this.once( "finish", this._handleFinish.bind( this ) );
+    this._hasher = crypto.createHash("md5");
+    this.once("finish", this._handleFinish.bind(this));
   }
 
   _handleFinish() {
-    this.emit( "hashed", this._hasher.digest( "hex" ) );
+    this.emit("hashed", this._hasher.digest("hex"));
   }
 
-  _write( chunk, encoding, writeComplete ) {
-    this._hasher.update( chunk, encoding );
+  _write(chunk, encoding, writeComplete) {
+    this._hasher.update(chunk, encoding);
     writeComplete();
   }
 }
