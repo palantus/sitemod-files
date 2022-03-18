@@ -93,7 +93,7 @@ export default (app) => {
   route.get("/drop", noGuest, function (req, res, next) {
     if (!validateAccess(req, res, { permission: "file.drop" })) return;
     let results = FileOrFolder.allByTag("drop")
-                              .filter(f => f.hasAccess(res.locals.user, 'r', res.locals.shareKey))
+                              .filter(f => f.related.owner?._id == res.locals.user._id)
                               .map(c => ({
                                 ...c.toObj(res.locals.user, res.locals.shareKey), 
                                 dropLink: `${global.sitecore.apiURL}/file/raw/${c._id}${c.name ? `/${encodeURI(c.name.replace("#", ""))}` : ''}?shareKey=${c.shareKey}`
