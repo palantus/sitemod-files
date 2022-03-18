@@ -14,10 +14,9 @@ export default class File extends Entity {
     this.tag("file")
 
     this.name = (name || "NewFile").replace(/[\/#]/g, '-')
-    this.updateMime()
+    this.updateMime(mimetype || mime)
     this.size = isNaN(size) ? 0 : parseInt(size)
     this.hash = md5 || hash
-    this.mime = mimetype || mime
     this.timestamp = getTimestamp()
     this.setExpiration(expire)
     if (tag && typeof tag === "string")
@@ -55,8 +54,19 @@ export default class File extends Entity {
     return null;
   }
 
-  updateMime() {
-    this.mime = mime.lookup(this.name) || 'application/octet-stream'
+  updateMime(suggestion) {
+    let filename = this.name
+    let newMimeType = mime.lookup(filename)
+    if(newMimeType)
+      this.mime = newMimeTypey
+    else if(filename?.endsWith(".ps1"))
+      this.mime = "text/plain"
+    else if(filename?.endsWith(".ld2"))
+      this.mime = "application/ld2"
+    else if(suggestion)
+      this.mime = suggestion
+    else
+      this.mime = 'application/octet-stream'
   }
 
   setExpiration(expire) {

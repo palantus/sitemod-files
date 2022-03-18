@@ -9,6 +9,7 @@ import "/components/field-list.mjs"
 import "/components/action-bar.mjs"
 import "/components/action-bar-item.mjs"
 import "/components/acl.mjs"
+import "/pages/tools/inspect-ld.mjs"
 import { confirmDialog } from "../../components/dialog.mjs"
 import { alertDialog } from "../../components/dialog.mjs"
 
@@ -146,6 +147,39 @@ class Element extends HTMLElement {
               <object data="${objectURL}" type="application/pdf">
                 <embed src="${objectURL}" type="application/pdf" />
               </object>
+            `
+            break;
+          }
+
+          case "application/javascript":
+          case "text/csv":
+          case "application/x-shellscript":
+          case "text/x-log":
+          case "text/plain": {
+            let res = await api.fetch(`file/dl/${this.fileId}`)
+            let text = await res.text()
+            let div = document.createElement("pre")
+            div.innerText = text
+            this.shadowRoot.getElementById("preview").appendChild(div)
+            break;
+          }
+
+          case "application/json": {
+            let res = await api.fetch(`file/dl/${this.fileId}`)
+            let text = await res.text()
+            let div = document.createElement("pre")
+            try{
+              div.innerText = JSON.stringify(JSON.parse(text), null, 2)
+            } catch(err){
+              div.innerText = text
+            }
+            this.shadowRoot.getElementById("preview").appendChild(div)
+            break;
+          }
+
+          case "application/ld2": {
+            this.shadowRoot.getElementById("preview").innerHTML = `
+              <inspect-ld-page hash=${this.file.hash} hidecontrols></inspect-ld-page>
             `
             break;
           }
