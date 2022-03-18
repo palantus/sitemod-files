@@ -58,7 +58,7 @@ export default class File extends Entity {
     let filename = this.name
     let newMimeType = mime.lookup(filename)
     if(newMimeType)
-      this.mime = newMimeTypey
+      this.mime = newMimeType
     else if(filename?.endsWith(".ps1"))
       this.mime = "text/plain"
     else if(filename?.endsWith(".ld2"))
