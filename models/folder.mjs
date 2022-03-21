@@ -88,6 +88,7 @@ class Folder extends Entity {
       tags: this.tags.filter(t => t.startsWith("user-")).map(t => t.substr(5)),
       rights: this.rights(user, shareKey),
       parentPath: this.parentPath,
+      created: this.timestamp,
       content: includeContent ? this.content.filter(c => c.hasAccess(user, 'r', shareKey)).map(c => c.toObj(user, shareKey, false)) : undefined,
       isSymbolic: this.isSymbolicLink()
     }

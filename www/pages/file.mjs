@@ -49,6 +49,8 @@ template.innerHTML = `
     <field-list id="fields-list" labels-pct="25">
       <field-edit type="text" label="Name" id="name"></field-edit>
       <field-edit type="text" label="In folder" id="parentPath" disabled></field-edit>
+      <field-edit type="text" label="Created" id="created" disabled></field-edit>
+      <field-edit type="text" label="Modified" id="modified" disabled></field-edit>
       <field-edit type="text" label="Tags" id="tags"></field-edit>
       <field-edit type="text" label="Mime type" id="mime"></field-edit>
       <field-edit type="text" label="Hash" id="hash" disabled></field-edit>
@@ -95,6 +97,8 @@ class Element extends HTMLElement {
     this.shadowRoot.getElementById('title').innerText = file.name
     this.shadowRoot.getElementById('name').setAttribute("value", file.name)
     this.shadowRoot.getElementById('parentPath').setAttribute("value", file.parentPath||"<none>")
+    this.shadowRoot.getElementById('created').setAttribute("value", file.created?.replace("T", " ").substring(0, 19) || "")
+    this.shadowRoot.getElementById('modified').setAttribute("value", file.modified?.replace("T", " ").substring(0, 19) || "<never>")
     this.shadowRoot.getElementById('tags').setAttribute("value", file.tags.join(", "))
     this.shadowRoot.getElementById('wiki-ref').setAttribute("value", `[${file.name?.replace(/\_/g, "\\_")}](/file/${file.id})`)
 
@@ -112,6 +116,7 @@ class Element extends HTMLElement {
     this.shadowRoot.getElementById('mime').parentElement.classList.toggle("hidden", file.type != "file")
     this.shadowRoot.getElementById('size').parentElement.classList.toggle("hidden", file.type != "file")
     this.shadowRoot.getElementById('hash').parentElement.classList.toggle("hidden", file.type != "file")
+    this.shadowRoot.getElementById('modified').parentElement.classList.toggle("hidden", file.type != "file")
 
     this.shadowRoot.getElementById('download-btn').classList.toggle("hidden", file.type != "file")
 

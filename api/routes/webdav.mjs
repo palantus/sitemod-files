@@ -287,6 +287,7 @@ export class DavFileSystem extends webdav.FileSystem {
       stream.on("finish", async () => {
         let stats = await ff.blob.stats()
         ff.size = stats.size
+        ff.markModified()
         ff.updateHash()
       })
       callback(null, stream)

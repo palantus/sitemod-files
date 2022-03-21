@@ -31,6 +31,10 @@ export default class File extends Entity {
     ACL.setDefaultACLOnEntity(this, owner.id == "guest" && folder ? folder.related.owner : owner, DataType.lookup("file"))
   }
 
+  markModified(){
+    this.modified = getTimestamp()
+  }
+
   static lookup(id) {
     if (!id) return null;
     return query.type(File).tag("file").id(id).not(query.tag("folder")).first
@@ -128,6 +132,8 @@ export default class File extends Entity {
       name: this.name,
       size: this.size || null,
       hash: this.hash || null,
+      created: this.timestamp || null,
+      modified: this.modified || null,
       mime: this.mime || null,
       ownerId: this.related.owner?.id || null,
       tags: this.tags.filter(t => t.startsWith("user-")).map(t => t.substr(5)),
