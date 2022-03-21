@@ -134,7 +134,8 @@ class Element extends HTMLElement {
           case "image/gif":
           case "image/jpg":
           case "image/jpeg":
-          case "image/png": {
+          case "image/png":
+          case "image/svg+xml": {
             let res = await api.fetch(`file/dl/${this.fileId}`)
             let blob = await res.blob()
             let objectURL = URL.createObjectURL(blob);
