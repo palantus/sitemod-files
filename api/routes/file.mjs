@@ -10,6 +10,8 @@ import File from "../../models/file.mjs";
 import Folder from "../../models/folder.mjs";
 import FileOrFolder from "../../models/fileorfolder.mjs";
 import Share from "../../../../models/share.mjs";
+import ACL from "../../../../models/acl.mjs";
+import DataType from "../../../../models/datatype.mjs";
 
 export default (app) => {
 
@@ -65,7 +67,7 @@ export default (app) => {
     res.json(files)
   })
 
-  route.post(["/drop", "/drop/shared"], noGuest, (req, res, next) => {
+  route.post(["/drop", "/drop/:aclread"], noGuest, (req, res, next) => {
     if (!validateAccess(req, res, { permission: "file.drop" })) return;
     let expirationDate = new Date()
     expirationDate.setDate(expirationDate.getDate() + 30)
@@ -74,7 +76,11 @@ export default (app) => {
       let fileObj = Array.isArray(req.files[filedef]) ? req.files[filedef] : [req.files[filedef]]
       for (let f of fileObj) {
         let file = new File({ ...f, tag: "drop", expire: expirationDate.toISOString(), owner: res.locals.user })
-        file.acl = req.path.endsWith("/shared") ? "r:shared;w:shared" : "r:private;w:private"
+        let acl = new ACL(file, DataType.lookup("file"))
+        if(req.params.aclread && typeof req.params.aclread === "string")
+          acl.handlePatch(`r:${req.params.aclread};w:private`)
+        else
+          acl.handlePatch("r:private;w:private")
         file.shareKey = new Share("drop", 'r', res.locals.user).attach(file).key;
         files.push({ id: file._id, hash: file.hash })
       }
