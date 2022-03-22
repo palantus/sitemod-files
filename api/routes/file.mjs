@@ -67,7 +67,7 @@ export default (app) => {
     res.json(files)
   })
 
-  route.post(["/drop", "/drop/:aclread"], noGuest, (req, res, next) => {
+  route.post(["/drop", "/drop/:acl"], noGuest, (req, res, next) => {
     if (!validateAccess(req, res, { permission: "file.drop" })) return;
     let expirationDate = new Date()
     expirationDate.setDate(expirationDate.getDate() + 30)
@@ -77,10 +77,13 @@ export default (app) => {
       for (let f of fileObj) {
         let file = new File({ ...f, tag: "drop", expire: expirationDate.toISOString(), owner: res.locals.user })
         let acl = new ACL(file, DataType.lookup("file"))
-        if(req.params.aclread && typeof req.params.aclread === "string")
-          acl.handlePatch(`r:${req.params.aclread};w:private`)
-        else
+        if(req.query.acl) {
+          acl.handlePatch(req.query.acl)
+        } else if(req.params.acl && typeof req.params.acl === "string") {
+          acl.handlePatch(`r:${req.params.acl};w:private`)
+        } else {
           acl.handlePatch("r:private;w:private")
+        }
         file.shareKey = new Share("drop", 'r', res.locals.user).attach(file).key;
         files.push({ id: file._id, hash: file.hash })
       }
