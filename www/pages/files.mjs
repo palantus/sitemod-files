@@ -41,6 +41,15 @@ template.innerHTML = `
 
     table th:nth-child(2), table td:nth-child(2){padding-left: 0px;}
     h1{margin-top: 5px; margin-left: 5px; margin-bottom: 0px;}
+
+    #files td.date{
+      color: gray;
+    }
+    @media only screen and (max-width: 1000px) {
+      #files td.date{
+        display: none;
+      }
+    }
   </style>  
 
   <action-bar class="hidden">
@@ -62,7 +71,7 @@ template.innerHTML = `
     <h1 id="folder-name"></h1>
 
     <table>
-        <tbody>
+        <tbody id="files">
         </tbody>
     </table>
   </div>
@@ -135,6 +144,7 @@ class Element extends HTMLElement {
         <tr class="result ${f.type}" data-id="${f.id}" data-name="${f.name}">
           <td><img style="width: 20px;" src="/img/${f.type == "folder" ? (f.isSymbolic ? "folder-link.png" : "folder.png") : "file.png"}"></td>
           <td><field-ref ref="${f.type == "folder" ? (this.folderId ? `/folder/${f.id}` : `/files${(f.parentPath&&f.parentPath!="/") ? encodeURI(f.parentPath):""}/${encodeURI(f.name)}`) : `/file/${f.id}`}">${f.name}</field-ref></td>
+          <td class="date">${(f.modified||f.created||"").replace("T", " ").substring(0, 19)}</td>
           <td>
             <img title="Show info" class="info iconbtn" src="/img/info.png">
             ${this.folder.rights.includes("w") ? `
