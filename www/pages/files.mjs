@@ -46,7 +46,7 @@ template.innerHTML = `
       color: gray;
       width: 150px;
     }
-    @media only screen and (max-width: 1000px) {
+    @media only screen and (max-width: 920px) {
       #files td.date{
         display: none;
       }
