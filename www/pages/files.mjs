@@ -14,6 +14,7 @@ import {state, apiURL, setPageTitle, goto, siteURL} from "/system/core.mjs"
 import {showDialog} from "/components/dialog.mjs"
 import { alertDialog } from "../../components/dialog.mjs"
 import { confirmDialog } from "../../components/dialog.mjs"
+import { showInRightbar } from "/pages/rightbar/rightbar.mjs"
 import "/components/data/searchhelp.mjs"
 
 const template = document.createElement('template');
@@ -261,7 +262,8 @@ class Element extends HTMLElement {
     } else if(e.target.classList.contains("edit")){
       this.editRowClicked(e.target, tr, id)
     } else if(e.target.classList.contains("info")){
-      goto(`/file/${id}`)
+      //goto(`/file/${id}`)
+      showInRightbar("file-info", {fileid: id}, true)
     }
   }
 

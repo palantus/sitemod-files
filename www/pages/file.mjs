@@ -61,8 +61,10 @@ template.innerHTML = `
     <br>
     <acl-component id="acl" rights="rw" disabled></acl-component>
   
-    <h3 class="subheader">Preview:</h3>
-    <div id="preview"></div>
+    <div id="preview-container" class="hidden">
+      <h3 class="subheader">Preview:</h3>
+      <div id="preview"></div>
+    </div>
   </div>
 `;
 
@@ -100,7 +102,7 @@ class Element extends HTMLElement {
     this.shadowRoot.getElementById('created').setAttribute("value", file.created?.replace("T", " ").substring(0, 19) || "")
     this.shadowRoot.getElementById('modified').setAttribute("value", file.modified?.replace("T", " ").substring(0, 19) || "<never>")
     this.shadowRoot.getElementById('tags').setAttribute("value", file.tags.join(", "))
-    this.shadowRoot.getElementById('wiki-ref').setAttribute("value", `[${file.name?.replace(/\_/g, "\\_")}](/file/${file.id})`)
+    this.shadowRoot.getElementById('wiki-ref').setAttribute("value", `[${file.name?.replace(/\_/g, "\\_")}](/${file.type}/${file.id})`)
 
     if(file.type == "file"){
       this.shadowRoot.getElementById('mime').setAttribute("value", file.mime)
@@ -127,7 +129,9 @@ class Element extends HTMLElement {
 
     this.shadowRoot.querySelectorAll("field-edit:not([disabled])").forEach(e => e.setAttribute("patch", `file/${file.id}`));
 
-    if(this.fileId != this.lastFileId){
+    this.shadowRoot.getElementById("preview-container").classList.toggle("hidden", file.type != "file")
+
+    if(file.type == "file" && this.fileId != this.lastFileId){
       this.shadowRoot.getElementById("preview").innerHTML = ""
       if(file.type == "file"){
         switch(file.mime){
