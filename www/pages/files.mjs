@@ -44,6 +44,7 @@ template.innerHTML = `
 
     #files td.date{
       color: gray;
+      width: 150px;
     }
     @media only screen and (max-width: 1000px) {
       #files td.date{
