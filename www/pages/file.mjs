@@ -121,7 +121,7 @@ class Element extends HTMLElement {
     this.shadowRoot.getElementById('download-btn').classList.toggle("hidden", file.type != "file")
 
     let permissions = await userPermissions()
-    if(permissions.includes("file.edit") && file.rights.includes("w")){
+    if((permissions.includes("file.edit") && file.rights.includes("w")) || permissions.includes("admin")){
       this.shadowRoot.getElementById("delete-btn").classList.remove("hidden")
     }
 
