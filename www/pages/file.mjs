@@ -33,6 +33,7 @@ template.innerHTML = `
     #subtitle{color: gray; margin-left: 10px;}
     #maintitle {margin-bottom: 0px;}
     #subtitle-size, #subtitle-owner, #subtitle-modified{color: #4c4ccc;}
+    video{width: 100%;}
   </style>
 
   <action-bar>
@@ -147,6 +148,26 @@ class Element extends HTMLElement {
             let div = document.createElement("pre")
             div.innerText = text
             this.shadowRoot.getElementById("preview").appendChild(div)
+            break;
+          }
+
+          case "video/mp4": {
+            this.shadowRoot.getElementById("preview").innerHTML = `
+            <video controls>
+              <source src="${this.file.links?.raw}" type="${file.mime}">
+              Your browser does not support the video tag.
+            </video> 
+            `
+            break;
+          }
+
+          case "audio/mpeg": {
+            this.shadowRoot.getElementById("preview").innerHTML = `
+            <audio controls>
+              <source src="${this.file.links?.raw}" type="${file.mime}">
+              Your browser does not support the audio tag.
+            </audio> 
+            `
             break;
           }
 
