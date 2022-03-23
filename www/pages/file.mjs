@@ -27,8 +27,7 @@ template.innerHTML = `
     #links-list{
       max-width: 800px;
     }
-    h3{margin-top: 20px;}
-    .subheader{text-decoration: underline;}
+    #preview-container h2{border-bottom: 1px solid gray; margin-top: 20px;}
     #preview object{
       width: 100%;
       height: 500px;
@@ -62,7 +61,7 @@ template.innerHTML = `
     <acl-component id="acl" rights="rw" disabled></acl-component>
   
     <div id="preview-container" class="hidden">
-      <h3 class="subheader">Preview:</h3>
+      <h2>Preview:</h2>
       <div id="preview"></div>
     </div>
   </div>
@@ -165,6 +164,7 @@ class Element extends HTMLElement {
           case "text/csv":
           case "application/x-shellscript":
           case "text/x-log":
+          case "text/markdown":
           case "text/plain": {
             let res = await api.fetch(`file/dl/${this.fileId}`)
             let text = await res.text()

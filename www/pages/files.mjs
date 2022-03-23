@@ -38,6 +38,7 @@ template.innerHTML = `
     table tbody td:nth-child(2){width: 450px}
     table tbody td:last-child{white-space: nowrap;}
     table tbody td{padding-top: 2px; padding-bottom: 0px;}
+    table tbody tr{height: 28px;}
 
     table th:nth-child(2), table td:nth-child(2){padding-left: 0px;}
     h1{margin-top: 5px; margin-left: 5px; margin-bottom: 0px;}
@@ -146,7 +147,7 @@ class Element extends HTMLElement {
                               : a.type == "folder" ? -1 : 1
     }).map(f => `
         <tr class="result ${f.type}" data-id="${f.id}" data-name="${f.name}">
-          <td><img style="width: 20px;" src="/img/${f.type == "folder" ? (f.isSymbolic ? "folder-link.png" : "folder.png") : "file.png"}"></td>
+          <td><img style="max-height: 20px; max-width: 20px;" src="/img/${f.type == "folder" ? (f.isSymbolic ? "folder-link.png" : "folder.png") : "file.png"}"></td>
           <td><field-ref ref="${f.type == "folder" ? (this.folderId ? `/folder/${f.id}` : `/files${(f.parentPath&&f.parentPath!="/") ? encodeURI(f.parentPath):""}/${encodeURI(f.name)}`) : `/file/${f.id}`}">${f.name}</field-ref></td>
           <td class="date">${(f.modified||f.created||"").replace("T", " ").substring(0, 19)}</td>
           <td>
