@@ -8,10 +8,10 @@ import "/components/field-ref.mjs"
 import "/components/field-list.mjs"
 import "/components/action-bar.mjs"
 import "/components/action-bar-item.mjs"
-import "/components/acl.mjs"
 import "/pages/tools/inspect-ld.mjs"
 import { confirmDialog } from "../../components/dialog.mjs"
 import { alertDialog } from "../../components/dialog.mjs"
+import { toggleInRightbar } from "/pages/rightbar/rightbar.mjs"
 
 const template = document.createElement('template');
 template.innerHTML = `
@@ -21,47 +21,33 @@ template.innerHTML = `
     #container{
       padding: 10px;
     }
-    #fields-list{
-      width: 400px;
-    }
-    #links-list{
-      max-width: 800px;
-    }
-    #preview-container h2{border-bottom: 1px solid gray; margin-top: 20px;}
+    #preview-container{margin-top: 20px;}
     #preview object{
       width: 100%;
-      height: 500px;
+      height: 600px;
     }
     #preview img{
       width: 100%;
     }
     .hidden{display: none;}
+    #subtitle{color: gray; margin-left: 10px;}
+    #maintitle {margin-bottom: 0px;}
+    #subtitle-size, #subtitle-owner, #subtitle-modified{color: #4c4ccc;}
   </style>
 
   <action-bar>
     <action-bar-item id="download-btn">Download</action-bar-item>
+    <action-bar-item id="details-btn">Details</action-bar-item>
     <action-bar-item id="delete-btn" class="hidden">Delete</action-bar-item>
   </action-bar>
     
   <div id="container">
-    <h2><span id="title-type"></span>: <span id="title"></span></h2>
-    <field-list id="fields-list" labels-pct="25">
-      <field-edit type="text" label="Name" id="name"></field-edit>
-      <field-edit type="text" label="In folder" id="parentPath" disabled></field-edit>
-      <field-edit type="text" label="Created" id="created" disabled></field-edit>
-      <field-edit type="text" label="Modified" id="modified" disabled></field-edit>
-      <field-edit type="text" label="Tags" id="tags"></field-edit>
-      <field-edit type="text" label="Mime type" id="mime"></field-edit>
-      <field-edit type="text" label="Hash" id="hash" disabled></field-edit>
-      <field-edit type="text" label="Size" id="size" disabled></field-edit>
-      <field-edit type="text" label="Wiki reference" id="wiki-ref" disabled></field-edit>
-    </field-list>
-
-    <br>
-    <acl-component id="acl" rights="rw" disabled></acl-component>
+    <h2 id="maintitle"><span id="title"></span></h2>
+    <div id="subtitle">
+      (<span id="subtitle-type"></span> owned by <span id="subtitle-owner"></span><span id="subtitle-size-container"> of size <span id="subtitle-size"></span></span>, last edited <span id="subtitle-modified"></span>)
+    </div>
   
     <div id="preview-container" class="hidden">
-      <h2>Preview:</h2>
       <div id="preview"></div>
     </div>
   </div>
@@ -79,6 +65,7 @@ class Element extends HTMLElement {
 
     this.shadowRoot.getElementById("delete-btn").addEventListener("click", this.deleteFile)
     this.shadowRoot.getElementById("download-btn").addEventListener("click", this.downloadFile)
+    this.shadowRoot.getElementById("details-btn").addEventListener("click", () => toggleInRightbar("file-info", null, {fileid: this.file.id, hideInfoButton: true, type: this.file.type}, true))
 
     this.fileId = /([\da-zA-Z]+)/.exec(state().path.split("/")[2])[0]
   }
@@ -94,30 +81,21 @@ class Element extends HTMLElement {
 
     setPageTitle(file.name);
     
-    this.shadowRoot.getElementById('title-type').innerText = file.type == "folder" ? "Folder" : "File"
-    this.shadowRoot.getElementById('title').innerText = file.name
-    this.shadowRoot.getElementById('name').setAttribute("value", file.name)
-    this.shadowRoot.getElementById('parentPath').setAttribute("value", file.parentPath||"<none>")
-    this.shadowRoot.getElementById('created').setAttribute("value", file.created?.replace("T", " ").substring(0, 19) || "")
-    this.shadowRoot.getElementById('modified').setAttribute("value", file.modified?.replace("T", " ").substring(0, 19) || "<never>")
-    this.shadowRoot.getElementById('tags').setAttribute("value", file.tags.join(", "))
-    this.shadowRoot.getElementById('wiki-ref').setAttribute("value", `[${file.name?.replace(/\_/g, "\\_")}](/${file.type}/${file.id})`)
 
     if(file.type == "file"){
-      this.shadowRoot.getElementById('mime').setAttribute("value", file.mime)
-
       let sizeName = file.size < 1000 ? `${file.size} bytes`
                    : file.size < 1000000 ? `${Math.floor(file.size/1000)} KB`
                    : `${Math.floor(file.size/1000000)} MB`
 
-      this.shadowRoot.getElementById('size').setAttribute("value", sizeName)
-      this.shadowRoot.getElementById('hash').setAttribute("value", file.hash)
+      this.shadowRoot.getElementById('subtitle-size').innerText = sizeName
     }
 
-    this.shadowRoot.getElementById('mime').parentElement.classList.toggle("hidden", file.type != "file")
-    this.shadowRoot.getElementById('size').parentElement.classList.toggle("hidden", file.type != "file")
-    this.shadowRoot.getElementById('hash').parentElement.classList.toggle("hidden", file.type != "file")
-    this.shadowRoot.getElementById('modified').parentElement.classList.toggle("hidden", file.type != "file")
+    this.shadowRoot.getElementById('subtitle-type').innerText = file.type == "folder" ? "Folder" : "File"
+    this.shadowRoot.getElementById('subtitle-owner').innerText = file.ownerId
+    this.shadowRoot.getElementById('subtitle-modified').innerText = (file.modified||file.created||"").replace("T", " ").substring(0, 19)
+    this.shadowRoot.getElementById('subtitle-size-container').classList.toggle("hidden", file.type != "file")
+    
+    this.shadowRoot.getElementById('title').innerText = file.name
 
     this.shadowRoot.getElementById('download-btn').classList.toggle("hidden", file.type != "file")
 
@@ -125,8 +103,6 @@ class Element extends HTMLElement {
     if((permissions.includes("file.edit") && file.rights.includes("w")) || permissions.includes("admin")){
       this.shadowRoot.getElementById("delete-btn").classList.remove("hidden")
     }
-
-    this.shadowRoot.querySelectorAll("field-edit:not([disabled])").forEach(e => e.setAttribute("patch", `file/${file.id}`));
 
     this.shadowRoot.getElementById("preview-container").classList.toggle("hidden", file.type != "file")
 
@@ -195,15 +171,11 @@ class Element extends HTMLElement {
           }
 
           default: 
-            this.shadowRoot.getElementById("preview").innerText = "No preview for mime type"
+            this.shadowRoot.getElementById("preview").innerText = "No preview for this file type"
         }
       }
     }
     this.lastFileId = this.fileId
-
-    this.shadowRoot.getElementById("acl").setAttribute("type", file.type)
-    this.shadowRoot.getElementById("acl").setAttribute("entity-id", this.fileId)
-    setTimeout(() => this.shadowRoot.getElementById("acl").removeAttribute("disabled"), 100)
   }
   
   async deleteFile(){

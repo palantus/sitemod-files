@@ -8,6 +8,7 @@ import {on, off} from "/system/events.mjs"
 import { closeRightbar } from "/pages/rightbar/rightbar.mjs"
 import {goto, state} from "/system/core.mjs"
 import { confirmDialog } from "/components/dialog.mjs"
+import "/components/acl.mjs"
 
 const template = document.createElement('template');
 template.innerHTML = `
@@ -33,11 +34,16 @@ template.innerHTML = `
         <field-edit type="text" label="Hash" id="hash" disabled></field-edit>
         <field-edit type="text" label="Size" id="size" disabled></field-edit>
         <field-edit type="text" label="Wiki ref." id="wiki-ref" disabled></field-edit>
-        </field-list>
+      </field-list>
+
 
       <button id="download-btn">Download</button>
       <button id="show-btn">Show info page</button>
       <button id="close">Close</button>
+
+      <br>
+      <br>
+      <acl-component id="acl" rights="rw" disabled></acl-component>
   </div>
 `;
 
@@ -58,6 +64,12 @@ class Element extends HTMLElement {
   async refreshData(){
     this.fileId = this.getAttribute("fileid")
     if(!this.fileId) return;
+
+    this.shadowRoot.getElementById("show-btn").classList.toggle("hidden", this.hasAttribute("hideInfoButton"))
+    if(this.hasAttribute("type")){
+      this.refreshUIFromType(this.getAttribute("type"))
+    }
+
     let file = this.file = await api.get(`file/${this.fileId}`)
 
     this.shadowRoot.getElementById('name').setAttribute("value", file.name)
@@ -78,14 +90,22 @@ class Element extends HTMLElement {
       this.shadowRoot.getElementById('hash').setAttribute("value", file.hash)
     }
 
-    this.shadowRoot.getElementById('mime').parentElement.classList.toggle("hidden", file.type != "file")
-    this.shadowRoot.getElementById('size').parentElement.classList.toggle("hidden", file.type != "file")
-    this.shadowRoot.getElementById('hash').parentElement.classList.toggle("hidden", file.type != "file")
-    this.shadowRoot.getElementById('modified').parentElement.classList.toggle("hidden", file.type != "file")
-
-    this.shadowRoot.getElementById('download-btn').classList.toggle("hidden", file.type != "file")
+    this.refreshUIFromType(file.type)
 
     this.shadowRoot.querySelectorAll("field-edit:not([disabled])").forEach(e => e.setAttribute("patch", `file/${file.id}`));
+
+    this.shadowRoot.getElementById("acl").setAttribute("type", file.type)
+    this.shadowRoot.getElementById("acl").setAttribute("entity-id", this.fileId)
+    setTimeout(() => this.shadowRoot.getElementById("acl").removeAttribute("disabled"), 100)
+  }
+
+  refreshUIFromType(type){
+    this.shadowRoot.getElementById('mime').parentElement.classList.toggle("hidden", type != "file")
+    this.shadowRoot.getElementById('size').parentElement.classList.toggle("hidden", type != "file")
+    this.shadowRoot.getElementById('hash').parentElement.classList.toggle("hidden", type != "file")
+    this.shadowRoot.getElementById('modified').parentElement.classList.toggle("hidden", type != "file")
+    this.shadowRoot.getElementById('download-btn').classList.toggle("hidden", type != "file")
+
   }
 
   async downloadFile(){

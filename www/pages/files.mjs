@@ -278,7 +278,7 @@ class Element extends HTMLElement {
       this.editRowClicked(e.target, tr, id)
     } else if(e.target.classList.contains("info")){
       //goto(`/file/${id}`)
-      showInRightbar("file-info", {fileid: id}, true)
+      showInRightbar("file-info", {fileid: id, type: tr.classList.contains("file") ? "file" : "folder"}, true)
     }
   }
 
