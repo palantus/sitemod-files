@@ -32,7 +32,7 @@ template.innerHTML = `
     table thead tr{
       border-bottom: 1px solid gray;
     }
-    img.iconbtn{width: 15px; cursor: pointer; margin-right: 2px;}
+    img.iconbtn{width: 15px; cursor: pointer; margin-right: 2px;vertical-align: middle;}
 
     table tbody td:nth-child(1){width: 25px}
     table tbody td:nth-child(2){width: 450px}
@@ -50,6 +50,9 @@ template.innerHTML = `
       #files td.date{
         display: none;
       }
+    }
+    @media (hover: none) and (pointer: coarse) {
+      table tbody td{padding-bottom: 5px; padding-top: 5px;}
     }
   </style>  
 
