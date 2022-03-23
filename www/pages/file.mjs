@@ -65,7 +65,7 @@ class Element extends HTMLElement {
 
     this.shadowRoot.getElementById("delete-btn").addEventListener("click", this.deleteFile)
     this.shadowRoot.getElementById("download-btn").addEventListener("click", this.downloadFile)
-    this.shadowRoot.getElementById("details-btn").addEventListener("click", () => toggleInRightbar("file-info", null, {fileid: this.file.id, hideInfoButton: true, type: this.file.type}, true))
+    this.shadowRoot.getElementById("details-btn").addEventListener("click", () => toggleInRightbar("file-info", null, [["hideInfoButton", "true"], ["type", this.file.type], ["fileid", this.file.id]], true))
 
     this.fileId = /([\da-zA-Z]+)/.exec(state().path.split("/")[2])[0]
   }

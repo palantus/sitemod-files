@@ -16,25 +16,24 @@ template.innerHTML = `
     #container{color: white; padding: 10px;}
     h2{margin: 0px; border-bottom: 1px solid lightgray; padding-bottom: 5px; margin-bottom: 10px;}
     #close{margin-top: 10px;}
-    #fields-list{
-      width: 270px;
-    }
+    table{width: 100%;}
+    table td:first-child{width: 80px;}
     .hidden{display: none;}
   </style>
   <div id="container">
       <h2>Information pane</h2>
 
-      <field-list id="fields-list" labels-pct="35">
-        <field-edit type="text" label="Name" id="name"></field-edit>
-        <field-edit type="text" label="In folder" id="parentPath" disabled></field-edit>
-        <field-edit type="text" label="Created" id="created" disabled></field-edit>
-        <field-edit type="text" label="Modified" id="modified" disabled></field-edit>
-        <field-edit type="text" label="Tags" id="tags"></field-edit>
-        <field-edit type="text" label="Mime type" id="mime"></field-edit>
-        <field-edit type="text" label="Hash" id="hash" disabled></field-edit>
-        <field-edit type="text" label="Size" id="size" disabled></field-edit>
-        <field-edit type="text" label="Wiki ref." id="wiki-ref" disabled></field-edit>
-      </field-list>
+      <table>
+        <tr><td>Name:</td><td><field-edit type="text" id="name"></field-edit></td></tr>
+        <tr><td>In folder:</td><td><field-edit type="text" id="parentPath" disabled></field-edit></td></tr>
+        <tr><td>Created:</td><td><field-edit type="text" id="created" disabled></field-edit></td></tr>
+        <tr><td>Modified:</td><td><field-edit type="text" id="modified" disabled></field-edit></td></tr>
+        <tr><td>Tags:</td><td><field-edit type="text" id="tags"></field-edit></td></tr>
+        <tr><td>Mime type:</td><td><field-edit type="text" id="mime"></field-edit></td></tr>
+        <tr><td>Hash:</td><td><field-edit type="text" id="hash" disabled></field-edit></td></tr>
+        <tr><td>Size:</td><td><field-edit type="text" id="size" disabled></field-edit></td></tr>
+        <tr><td>Wiki ref.:</td><td><field-edit type="text" id="wiki-ref" disabled></field-edit></td></tr>
+      </table>
 
 
       <button id="download-btn">Download</button>
@@ -69,7 +68,6 @@ class Element extends HTMLElement {
     if(this.hasAttribute("type")){
       this.refreshUIFromType(this.getAttribute("type"))
     }
-
     let file = this.file = await api.get(`file/${this.fileId}`)
 
     this.shadowRoot.getElementById('name').setAttribute("value", file.name)
@@ -100,12 +98,12 @@ class Element extends HTMLElement {
   }
 
   refreshUIFromType(type){
-    this.shadowRoot.getElementById('mime').parentElement.classList.toggle("hidden", type != "file")
-    this.shadowRoot.getElementById('size').parentElement.classList.toggle("hidden", type != "file")
-    this.shadowRoot.getElementById('hash').parentElement.classList.toggle("hidden", type != "file")
-    this.shadowRoot.getElementById('modified').parentElement.classList.toggle("hidden", type != "file")
+    this.shadowRoot.getElementById('mime').closest("tr").classList.toggle("hidden", type != "file")
+    this.shadowRoot.getElementById('size').closest("tr").classList.toggle("hidden", type != "file")
+    this.shadowRoot.getElementById('hash').closest("tr").classList.toggle("hidden", type != "file")
+    this.shadowRoot.getElementById('modified').closest("tr").classList.toggle("hidden", type != "file")
+   
     this.shadowRoot.getElementById('download-btn').classList.toggle("hidden", type != "file")
-
   }
 
   async downloadFile(){
@@ -141,7 +139,6 @@ class Element extends HTMLElement {
   }
 
   connectedCallback() {
-    this.refreshData();
     on("changed-page", elementName, () => closeRightbar())
   }
 
