@@ -14,7 +14,7 @@ import {state, apiURL, setPageTitle, goto, siteURL} from "/system/core.mjs"
 import {showDialog} from "/components/dialog.mjs"
 import { alertDialog } from "../../components/dialog.mjs"
 import { confirmDialog } from "../../components/dialog.mjs"
-import { showInRightbar } from "/pages/rightbar/rightbar.mjs"
+import { toggleInRightbar } from "/pages/rightbar/rightbar.mjs"
 import "/components/data/searchhelp.mjs"
 
 const template = document.createElement('template');
@@ -278,7 +278,7 @@ class Element extends HTMLElement {
       this.editRowClicked(e.target, tr, id)
     } else if(e.target.classList.contains("info")){
       //goto(`/file/${id}`)
-      showInRightbar("file-info", [["type", tr.classList.contains("file") ? "file" : "folder"], ["fileid", id]], true)
+      toggleInRightbar("file-info", null, [["type", tr.classList.contains("file") ? "file" : "folder"], ["fileid", id]], true)
     }
   }
 
