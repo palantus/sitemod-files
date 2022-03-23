@@ -339,7 +339,7 @@ export class DavFileSystem extends webdav.FileSystem {
     let file = FileOrFolder.lookupByPath(sanitizePath(path.toString()))
     if (!file)
       return callback(webdav.Errors.ResourceNotFound);
-    callback(null, file.timestamp ? new Date(file.timestamp).getTime() : 0)
+    callback(null, (file.modified||file.timestamp) ? new Date(file.modified||file.timestamp).getTime() : 0)
   }
   
   _type(path, ctx, callback) {
