@@ -324,7 +324,7 @@ class Element extends HTMLElement {
   }
 }
 
-export async function uploadNewFile(dialog, {tags = [], folder = null, callback} = {}){
+export async function uploadNewFile(dialog, {tags = [], folder = null, callback, acl = ""} = {}){
   showDialog(dialog, {
     show: () => {
       dialog.querySelector("#new-tag").focus();
@@ -340,7 +340,7 @@ export async function uploadNewFile(dialog, {tags = [], folder = null, callback}
         files = await api.upload(`file/folder/${folder.id}/upload?tags=${encodeURI(tags.join(","))}`, formData);
       } else {
         if(tags.length < 1) throw "Must provide a tag";
-        files = await api.upload(`file/tag/${tags[0]}/upload`, formData);
+        files = await api.upload(`file/tag/${tags[0]}/upload?acl=${acl}`, formData);
       }
       if(tags.length > 1){
         for(let f of files){

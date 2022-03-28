@@ -61,6 +61,10 @@ export default (app) => {
       let fileObj = Array.isArray(req.files[filedef]) ? req.files[filedef] : [req.files[filedef]]
       for (let f of fileObj) {
         let file = new File({ ...f, tag: req.params.tag, owner: res.locals.user })
+        if(req.query.acl) {
+          let acl = new ACL(file, DataType.lookup("file"))
+          acl.handlePatch(req.query.acl)
+        }
         files.push({ id: file._id, hash: file.hash })
       }
     }
