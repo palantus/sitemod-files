@@ -40,7 +40,7 @@ class Service {
       hash,
       mime: fileContent.mime||null,
       tags,
-      data: fileContent.blob.stream()
+      data: fileContent.blob
     })
   }
 
