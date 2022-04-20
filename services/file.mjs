@@ -24,7 +24,7 @@ export let tokens = [
 
 class Service {
 
-  async storeFileFromHash(hash, tags){
+  async storeFileFromHash(hash, tags, owner){
     if(tags.length < 1) throw "tags is mandatory"
     if(hash < 1) throw "hash is mandatory"
 
@@ -40,7 +40,8 @@ class Service {
       hash,
       mime: fileContent.mime||null,
       tags,
-      data: fileContent.blob
+      data: fileContent.blob,
+      owner
     })
   }
 
