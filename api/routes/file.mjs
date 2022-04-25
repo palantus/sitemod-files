@@ -282,6 +282,12 @@ export default (app) => {
     res.json(true)
   })
 
+  route.get('/:id/exists', async function (req, res, next) {
+    if (!validateAccess(req, res, { permission: "file.read" })) return;
+    let file = FileOrFolder.lookupAccessible(sanitize(req.params.id), res.locals.user, res.locals.shareKey)
+    res.json(!!file);
+  })
+
   route.get('/:id', async function (req, res, next) {
     if (!validateAccess(req, res, { permission: "file.read" })) return;
     let file = FileOrFolder.lookupAccessible(sanitize(req.params.id), res.locals.user, res.locals.shareKey)
