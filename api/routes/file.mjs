@@ -145,7 +145,13 @@ export default (app) => {
     if (!validateAccess(req, res, { permission: "file.upload" })) return;
     if (!req.query.tags) throw "Tags in the query are mandatory"
     if (!req.query.hash) throw "Must provide hash in query";
-    let f = { name: req.query.name || "file", size: parseInt(req.header("Content-Length")), hash: req.query.hash, mimetype: req.query.mime || "application/x-binary", data: req }
+    let f = {
+      name: req.query.name || "file", 
+      size: parseInt(req.header("Content-Length")), 
+      hash: req.query.hash, 
+      mimetype: req.query.mime || req.headers['content-type'] || "application/x-binary", 
+      data: req 
+    }
     let file = new File({ ...f, tags: req.query.tags?.split(",").map(t => t.trim() || []), owner: res.locals.user })
     res.json({ id: file._id, hash: file.hash, name: f.name })
   })
