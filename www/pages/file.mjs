@@ -80,6 +80,8 @@ class Element extends HTMLElement {
       return;
     }
 
+    this.fileId = file.id
+
     setPageTitle(file.name);
     
 
