@@ -1,4 +1,4 @@
-const elementName = 'files-page'
+const elementName = 'files-search-page'
 
 import api from "/system/api.mjs"
 import {userPermissions} from "/system/user.mjs"
@@ -9,8 +9,6 @@ import "/components/field.mjs"
 import "/components/field-edit.mjs"
 import {on, off, fire} from "/system/events.mjs"
 import {state, pushStateQuery, apiURL} from "/system/core.mjs"
-import {showDialog} from "/components/dialog.mjs"
-import { alertDialog } from "../../components/dialog.mjs"
 import { confirmDialog } from "../../components/dialog.mjs"
 import "/components/data/searchhelp.mjs"
 
@@ -41,8 +39,6 @@ template.innerHTML = `
   </style>  
 
   <action-bar>
-      <action-bar-item id="new-btn" class="hidden">Upload file(s)</action-bar-item>
-      <action-bar-item id="add-folder" class="hidden">Add folder</action-bar-item>
       <action-bar-item id="download-folder" title="Only downloads the files that are currently shown. It does not allow download of folders.">Download all files</action-bar-item>
       <action-bar-item id="delete-all-btn" class="hidden">Delete all</action-bar-item>
   </action-bar>
@@ -66,16 +62,6 @@ template.innerHTML = `
         </tbody>
     </table>
   </div>
-
-  <dialog-component title="Upload file" id="new-dialog">
-    <field-component label="Tags"><input id="new-tag" placeholder="tag1, tag2, ..."></input></field-component>
-    <input type="file" multiple>
-  </dialog-component>
-  
-  <dialog-component title="Add folder" id="add-folder-dialog">
-    <field-component label="Name"><input id="add-name"></input></field-component>
-    <field-component label="Filter"><input id="add-filter"></input></field-component>
-  </dialog-component>
 `;
 
 class Element extends HTMLElement {
@@ -86,15 +72,12 @@ class Element extends HTMLElement {
     this.shadowRoot.appendChild(template.content.cloneNode(true));
 
     this.refreshData = this.refreshData.bind(this);
-    this.uploadFile = this.uploadFile.bind(this);
-    this.addFolder = this.addFolder.bind(this);
     this.downloadFolder = this.downloadFolder.bind(this);
     this.queryChanged = this.queryChanged.bind(this);
     this.deleteAll = this.deleteAll.bind(this);
     this.tabClick = this.tabClick.bind(this)
+    this.editRowClicked = this.editRowClicked.bind(this)
     
-    this.shadowRoot.getElementById("new-btn").addEventListener("click", this.uploadFile)
-    this.shadowRoot.getElementById("add-folder").addEventListener("click", this.addFolder)
     this.shadowRoot.getElementById("download-folder").addEventListener("click", this.downloadFolder)
     this.shadowRoot.getElementById("delete-all-btn").addEventListener("click", this.deleteAll)
     this.shadowRoot.querySelector('table tbody').addEventListener("click", this.tabClick)
@@ -107,20 +90,14 @@ class Element extends HTMLElement {
     this.query = ""
 
     userPermissions().then(permissions => {
-      if(permissions.includes("file.upload")){
-        this.shadowRoot.getElementById("new-btn").classList.remove("hidden")
-      }
       if(permissions.includes("file.edit")){
-        this.shadowRoot.getElementById("add-folder").classList.remove("hidden")
         this.shadowRoot.getElementById("delete-all-btn").classList.remove("hidden")
       }
     })
   }
   async refreshData(){
-    let result = await api.get(`file/query?filter=${this.lastQuery}`)
+    let result = this.files = await api.get(`file/query?filter=${this.lastQuery}`)
     if(!result) return this.shadowRoot.querySelector('table tbody').innerHTML = ''
-    this.tags = result.tags;
-    this.files = result.results;
     this.shadowRoot.querySelector('table tbody').innerHTML = result.sort((a, b) => {
       return a.type == b.type ? (a.name?.toLowerCase() < b.name?.toLowerCase() ? -1 : 1)
                               : a.type == "folder" ? -1 : 1
@@ -137,52 +114,18 @@ class Element extends HTMLElement {
           </td>
         </tr>
       `).join("");
-
-    this.shadowRoot.getElementById("add-folder").toggleAttribute("disabled", !this.isFolderView)
   }
 
   async queryChanged(q = this.shadowRoot.querySelector('input').value){
     if(q == this.lastQuery)
       return;
 
-    q = q.toLowerCase() || "folder:"
-    this.isFolderView = /folder\:\d*/.test(q)
-    this.folder = this.isFolderView ? /folder\:(\d*)/.exec(q)[1]||"root" : null
+    q = q.toLowerCase() || null
 
     this.lastQuery = q;
     this.shadowRoot.querySelector('input').value = q;
 
     this.refreshData();
-  }
-
-  async uploadFile(){
-    let dialog = this.shadowRoot.querySelector("#new-dialog")
-    uploadNewFile(dialog, {tags: this.tags || [], callback: this.refreshData})
-  }
-
-  addFolder(){
-    if(this.shadowRoot.getElementById("add-folder").hasAttribute("disabled")) return;
-    if(!this.folder) return;
-
-    let dialog = this.shadowRoot.getElementById("add-folder-dialog")
-    
-    showDialog(dialog, {
-      show: () => this.shadowRoot.getElementById("add-name").focus(),
-      ok: async (val) => {
-        await api.post(`file/${this.folder}/folders`, val)
-        this.refreshData()
-      },
-      validate: (val) => 
-          !val.name ? "Please fill out name"
-        : true,
-      values: () => {return {
-        name: this.shadowRoot.getElementById("add-name").value,
-        filter: this.shadowRoot.getElementById("add-filter").value,
-      }},
-      close: () => {
-        this.shadowRoot.querySelectorAll("field-component input").forEach(e => e.value = '')
-      }
-    })
   }
 
   async downloadFolder(){
@@ -255,7 +198,7 @@ class Element extends HTMLElement {
     } else {
       tr.setAttribute("edit-mode", "true")
 
-      tdName.innerHTML = `<field-edit type="text" value="${fileObj.filename}" patch="file/${id}" field="filename"></field-edit>`
+      tdName.innerHTML = `<field-edit type="text" value="${fileObj.name}" patch="file/${id}" field="filename"></field-edit>`
       if(fileObj.type == "folder"){
         tdFilter.innerHTML = `<field-edit type="text" value="${fileObj.filter||""}" patch="file/${id}" field="filter"></field-edit>`
       }
@@ -277,38 +220,6 @@ class Element extends HTMLElement {
     off("changed-page", elementName)
     off("changed-page-query", elementName)
   }
-}
-
-export async function uploadNewFile(dialog, {tags = [], callback} = {}){
-  showDialog(dialog, {
-    show: () => {
-      dialog.querySelector("#new-tag").focus();
-      dialog.querySelector("#new-tag").value = tags.join(", ");
-    },
-    ok: async (val) => {
-      let formData = new FormData();
-      for(let file of dialog.querySelector("input[type=file]").files)
-        formData.append("file", file);
-      let tags = val.tag.split(",").map(t => t.trim())
-      let files = await api.upload(`/file/tag/${tags[0]}/upload`, formData);
-      if(tags.length > 1){
-        for(let f of files){
-          await api.patch(`file/${f.id}`, {tags})
-        }
-      }
-      if(typeof callback === "function") 
-        callback(val);
-    },
-    validate: (val) => 
-        !val.tag ? "Please fill out tag"
-      : true,
-    values: () => {return {
-      tag: dialog.querySelector("#new-tag").value,
-    }},
-    close: () => {
-      dialog.querySelectorAll("field-component input").forEach(e => e.value = '')
-    }
-  })
 }
 
 window.customElements.define(elementName, Element);

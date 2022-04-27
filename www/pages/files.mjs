@@ -55,9 +55,11 @@ template.innerHTML = `
     @media (hover: none) and (pointer: coarse) {
       table tbody td{padding-bottom: 5px; padding-top: 5px;}
     }
+    #find-icon{height: 13px;}
   </style>  
 
   <action-bar class="hidden">
+      <action-bar-item id="search-btn" title="Search for files"><img id="find-icon" src="/img/find.png"></img></action-bar-item>
       <action-bar-item id="new-btn" class="hidden">Upload file(s)</action-bar-item>
       <action-bar-item id="add-folder" class="hidden">Add folder</action-bar-item>
       <action-bar-item id="create-symbolic-link-btn" class="hidden">Show in my files</action-bar-item>
@@ -111,6 +113,7 @@ class Element extends HTMLElement {
     this.tabClick = this.tabClick.bind(this)
     this.createSymbolicLink = this.createSymbolicLink.bind(this)
     
+    this.shadowRoot.getElementById("search-btn").addEventListener("click", () => goto("/files-search"))
     this.shadowRoot.getElementById("new-btn").addEventListener("click", this.uploadFile)
     this.shadowRoot.getElementById("add-folder").addEventListener("click", this.addFolder)
     this.shadowRoot.getElementById("download-folder").addEventListener("click", this.downloadFolder)
