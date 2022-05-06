@@ -21,7 +21,7 @@ template.innerHTML = `
     .hidden{display: none;}
   </style>
   <div id="container">
-      <h2>Information pane</h2>
+      <h2>Information</h2>
 
       <table>
         <tr><td>Name:</td><td><field-edit type="text" id="name"></field-edit></td></tr>
@@ -42,7 +42,9 @@ template.innerHTML = `
 
       <br>
       <br>
-      <acl-component id="acl" rights="rw" disabled></acl-component>
+      <h2>Permissions</h2>
+
+      <acl-component id="acl" rights="rw" disabled always-show></acl-component>
   </div>
 `;
 
