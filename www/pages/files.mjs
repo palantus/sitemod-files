@@ -37,7 +37,7 @@ template.innerHTML = `
     table tbody td:nth-child(1){width: 25px}
     table tbody td:nth-child(2){width: 450px}
     table tbody td:last-child{white-space: nowrap;}
-    table tbody td{padding-top: 2px; padding-bottom: 0px;}
+    table tbody td{padding-top: 2px; padding-bottom: 1px;}
     table tbody tr{height: 28px;}
 
     table th:nth-child(2), table td:nth-child(2){padding-left: 0px;}
