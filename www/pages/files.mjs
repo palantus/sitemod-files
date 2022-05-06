@@ -41,7 +41,7 @@ template.innerHTML = `
     table tbody tr{height: 28px;}
 
     table th:nth-child(2), table td:nth-child(2){padding-left: 0px;}
-    h1{margin-top: 5px; margin-left: 5px; margin-bottom: 0px;}
+    h1{margin-top: 3px; margin-left: 5px; margin-bottom: 3px;}
 
     #files td.date{
       color: gray;
