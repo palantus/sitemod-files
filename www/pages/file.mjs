@@ -153,7 +153,8 @@ class Element extends HTMLElement {
             break;
           }
 
-          case "video/mp4": {
+          case "video/mp4": 
+          case "video/webm": {
             this.shadowRoot.getElementById("preview").innerHTML = `
             <video controls>
               <source src="${this.file.links?.raw}" type="${file.mime}">
