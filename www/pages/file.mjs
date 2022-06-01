@@ -32,7 +32,7 @@ template.innerHTML = `
     .hidden{display: none;}
     #subtitle{color: gray; margin-left: 10px;}
     #maintitle {margin-bottom: 0px;}
-    #subtitle-size, #subtitle-owner, #subtitle-modified{color: #4c4ccc;}
+    #subtitle-size, #subtitle-owner, #subtitle-modified{color: var(--accent-color-light);}
     video{width: 100%;}
   </style>
 

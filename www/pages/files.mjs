@@ -32,7 +32,7 @@ template.innerHTML = `
     table thead tr{
       border-bottom: 1px solid gray;
     }
-    img.iconbtn{width: 15px; cursor: pointer; margin-right: 2px;vertical-align: middle;}
+    img.iconbtn{width: 15px; cursor: pointer; margin-right: 2px;vertical-align: middle; filter: invert(1);}
 
     table tbody td:nth-child(1){width: 25px}
     table tbody td:nth-child(2){width: 450px}
@@ -47,6 +47,10 @@ template.innerHTML = `
       color: gray;
       width: 150px;
     }
+    img.file.icon{
+      filter: invert(1);
+    }
+    img.icon{max-height: 20px; max-width: 20px;}
     @media only screen and (max-width: 920px) {
       #files td.date{
         display: none;
@@ -56,6 +60,7 @@ template.innerHTML = `
       table tbody td{padding-bottom: 5px; padding-top: 5px;}
     }
     #find-icon{height: 13px;}
+    #options-menu button {margin-bottom: 5px;}
   </style>  
 
   <action-bar class="hidden">
@@ -66,9 +71,9 @@ template.innerHTML = `
 
       <action-bar-item id="options-menu" class="hidden">
         <action-bar-menu label="Options">
-          <button id="download-folder" title="Only downloads the files that are currently shown. It does not allow download of folders.">Download all files</button><br>
-          <button id="delete-all-btn" class="hidden">Delete all</button><br>
-          <button id="copy-webdav-btn" class="hidden">Copy webdav link</button><br>
+          <button class="styled" id="download-folder" title="Only downloads the files that are currently shown. It does not allow download of folders.">Download all files</button><br>
+          <button class="styled" id="delete-all-btn" class="hidden">Delete all</button><br>
+          <button class="styled" id="copy-webdav-btn" class="hidden">Copy webdav link</button><br>
         </action-bar-menu>
       </action-bar-item>
 
@@ -150,7 +155,7 @@ class Element extends HTMLElement {
                               : a.type == "folder" ? -1 : 1
     }).map(f => `
         <tr class="result ${f.type}" data-id="${f.id}" data-name="${f.name}">
-          <td><img style="max-height: 20px; max-width: 20px;" src="/img/${f.type == "folder" ? (f.isSymbolic ? "folder-link.png" : "folder.png") : "file.png"}"></td>
+          <td><img class="${f.type} icon" src="/img/${f.type == "folder" ? (f.isSymbolic ? "folder-link.png" : "folder.png") : "file.png"}"></td>
           <td><field-ref ref="${f.type == "folder" ? (this.folderId ? `/folder/${f.id}` : `/files${(f.parentPath&&f.parentPath!="/") ? encodeURI(f.parentPath):""}/${encodeURI(f.name)}`) : `/file/${f.id}`}">${f.name}</field-ref></td>
           <td class="date">${(f.modified||f.created||"").replace("T", " ").substring(0, 19)}</td>
           <td>
