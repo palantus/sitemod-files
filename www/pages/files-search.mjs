@@ -103,7 +103,7 @@ class Element extends HTMLElement {
                               : a.type == "folder" ? -1 : 1
     }).map(f => `
         <tr class="result" data-id="${f.id}" data-name="${f.name}">
-          <td><img style="width: 20px;" src="/img/${f.type == "folder" ? "folder.svg" : "file.png"}"></td>
+          <td><img style="width: 20px;" src="/img/${f.type == "folder" ? "folder.svg" : "file-white.png"}"></td>
           <td><field-ref ref="${f.type == "folder" ? `/files?filter=folder:${f.id}` : `/file/${f.id}`}">${f.name}</field-ref></td>
           <td>${f.size?`${Math.floor(f.size/1000)} KB`:""}</td>
           <td>${f.mime||f.filter||""}</td>

@@ -47,9 +47,6 @@ template.innerHTML = `
       color: gray;
       width: 150px;
     }
-    img.file.icon{
-      filter: invert(1);
-    }
     img.icon{max-height: 20px; max-width: 20px;}
     @media only screen and (max-width: 920px) {
       #files td.date{
@@ -155,7 +152,7 @@ class Element extends HTMLElement {
                               : a.type == "folder" ? -1 : 1
     }).map(f => `
         <tr class="result ${f.type}" data-id="${f.id}" data-name="${f.name}">
-          <td><img class="${f.type} icon" src="/img/${f.type == "folder" ? (f.isSymbolic ? "folder-link.png" : "folder.png") : "file.png"}"></td>
+          <td><img class="${f.type} icon" src="/img/${f.type == "folder" ? (f.isSymbolic ? "folder-link.png" : "folder.png") : "file-white.png"}"></td>
           <td><field-ref ref="${f.type == "folder" ? (this.folderId ? `/folder/${f.id}` : `/files${(f.parentPath&&f.parentPath!="/") ? encodeURI(f.parentPath):""}/${encodeURI(f.name)}`) : `/file/${f.id}`}">${f.name}</field-ref></td>
           <td class="date">${(f.modified||f.created||"").replace("T", " ").substring(0, 19)}</td>
           <td>
