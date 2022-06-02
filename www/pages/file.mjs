@@ -28,6 +28,7 @@ template.innerHTML = `
     }
     #preview img{
       width: 100%;
+      background-color: white;
     }
     .hidden{display: none;}
     #subtitle{color: gray; margin-left: 10px;}
