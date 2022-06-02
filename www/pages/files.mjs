@@ -67,7 +67,7 @@ template.innerHTML = `
       <action-bar-item id="create-symbolic-link-btn" class="hidden">Show in my files</action-bar-item>
 
       <action-bar-item id="options-menu" class="hidden">
-        <action-bar-menu label="Options">
+        <action-bar-menu label="Options" width="120px">
           <button class="styled" id="download-folder" title="Only downloads the files that are currently shown. It does not allow download of folders.">Download all files</button><br>
           <button class="styled" id="delete-all-btn" class="hidden">Delete all</button><br>
           <button class="styled" id="copy-webdav-btn" class="hidden">Copy webdav link</button><br>
