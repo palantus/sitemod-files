@@ -44,7 +44,7 @@ template.innerHTML = `
     }
     
     #fileoverviewtab tr:hover{
-      background-color: lightgrey;
+      background-color: var(--table-hover);
     }
     
     #fileoverviewtab tbody tr{cursor: pointer;}
