@@ -12,13 +12,15 @@ import "/components/acl.mjs"
 
 const template = document.createElement('template');
 template.innerHTML = `
+  <link rel='stylesheet' href='/css/global.css'>
   <style>
     #container{color: white; padding: 10px;}
     h2{margin: 0px; border-bottom: 1px solid lightgray; padding-bottom: 5px; margin-bottom: 10px;}
-    #close{margin-top: 10px;}
+    table{margin-bottom: 10px;}
     table{width: 100%;}
     table td:first-child{width: 80px;}
     .hidden{display: none;}
+    button{margin-bottom: 5px;}
   </style>
   <div id="container">
       <h2>Information</h2>
@@ -36,9 +38,9 @@ template.innerHTML = `
       </table>
 
 
-      <button id="download-btn">Download</button>
-      <button id="show-btn">Show info page</button>
-      <button id="close">Close</button>
+      <button class="styled" id="download-btn">Download</button><br>
+      <button class="styled" id="show-btn">Show info page</button><br>
+      <button class="styled" id="close">Close</button>
 
       <br>
       <br>
