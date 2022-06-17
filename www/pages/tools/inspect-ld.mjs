@@ -303,8 +303,10 @@ class Element extends HTMLElement {
     this.attemptLoadParmFile();
     if(this.hasAttribute("hidecontrols")){
       this.shadowRoot.getElementById("controls").classList.toggle("hidden", true)
+      this.shadowRoot.querySelector("h1").classList.toggle("hidden", true)
+    } else {
+      setPageTitle("Inspect LD2")
     }
-    setPageTitle("Inspect LD2")
   }
 
   disconnectedCallback() {
