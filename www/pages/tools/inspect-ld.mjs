@@ -4,7 +4,7 @@ import LD2Reader from "/libs/ld2reader.mjs"
 import "/components/action-bar.mjs"
 import "/components/action-bar-item.mjs"
 import api from "/system/api.mjs"
-import {state, pushStateQuery} from "/system/core.mjs"
+import {state, pushStateQuery, setPageTitle} from "/system/core.mjs"
 import {on, off} from "/system/events.mjs"
 import { alertDialog } from "/components/dialog.mjs"
 
@@ -16,7 +16,9 @@ template.innerHTML = `
         padding: 5px;
         position: relative;
     }
-    
+    h1{
+      margin-bottom: 5px;
+    }
     #fileinput{
       padding-bottom: 5px;
       margin-top: 10px;
@@ -86,6 +88,7 @@ template.innerHTML = `
   </style>
 
   <div id="container">
+    <h1>Inspect LD2 file</h1>
     <div id="controls">
       <label for="hash">Enter hash: </label>
       <input type="text" id="hash" placeholder="File hash"></input>
@@ -301,6 +304,7 @@ class Element extends HTMLElement {
     if(this.hasAttribute("hidecontrols")){
       this.shadowRoot.getElementById("controls").classList.toggle("hidden", true)
     }
+    setPageTitle("Inspect LD2")
   }
 
   disconnectedCallback() {
