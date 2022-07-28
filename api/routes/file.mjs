@@ -89,7 +89,11 @@ export default (app) => {
           acl.handlePatch("r:private;w:private")
         }
         file.shareKey = new Share("drop", 'r', res.locals.user).attach(file).key;
-        files.push({ id: file._id, hash: file.hash })
+        files.push({ 
+          id: file._id, 
+          hash: file.hash,
+          dropLink: `${global.sitecore.apiURL}/file/raw/${file._id}${file.name ? `/${encodeURI(file.name.replace("#", ""))}` : ''}?shareKey=${file.shareKey}`
+        })
       }
     }
     res.json(files)
