@@ -204,7 +204,7 @@ class Element extends HTMLElement {
   }
 
   async doUploadFile(formData){
-    let files = await api.upload(`/file/drop`, formData);
+    let files = await api.upload(`file/drop`, formData);
     this.refreshData();
   }
   
