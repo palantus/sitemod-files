@@ -157,7 +157,9 @@ export default (app) => {
       data: req 
     }
     let file = new File({ ...f, tags: req.query.tags?.split(",").map(t => t.trim() || []), owner: res.locals.user })
-    res.json({ id: file._id, hash: file.hash, name: f.name })
+    req.on("end", () => {
+      res.json({ id: file._id, hash: file.hash, name: f.name })
+    })
   })
 
   route.post("/:id/folders", function (req, res, next) {
