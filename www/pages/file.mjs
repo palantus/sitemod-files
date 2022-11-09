@@ -17,6 +17,7 @@ const template = document.createElement('template');
 template.innerHTML = `
 
   <link rel='stylesheet' href='/css/global.css'>
+  <link rel='stylesheet' href='/css/searchresults.css'>
   <style>
     #container{
       padding: 10px;
@@ -29,6 +30,9 @@ template.innerHTML = `
     #preview img{
       width: 100%;
       background-color: white;
+    }
+    #preview table thead tr{
+      border-bottom: 1px solid gray;
     }
     .hidden{display: none;}
     #subtitle{color: gray; margin-left: 10px;}
@@ -87,9 +91,7 @@ class Element extends HTMLElement {
     
 
     if(file.type == "file"){
-      let sizeName = file.size < 1000 ? `${file.size} bytes`
-                   : file.size < 1000000 ? `${Math.floor(file.size/1000)} KB`
-                   : `${Math.floor(file.size/1000000)} MB`
+      let sizeName = sizeToName(file.size)
 
       this.shadowRoot.getElementById('subtitle-size').innerText = sizeName
     }
@@ -195,6 +197,29 @@ class Element extends HTMLElement {
             break;
           }
 
+          case "application/zip": {
+            this.shadowRoot.getElementById("preview").innerHTML = "<p>Loading preview...</p>"
+            let res = await api.fetch(`file/dl/${this.fileId}`)
+            let blob = await res.blob()
+            import("https://deno.land/x/zipjs/index.js").then(async zip => {
+              let entries = await (new zip.ZipReader(new zip.BlobReader(blob))).getEntries()
+              this.shadowRoot.getElementById("preview").innerHTML = `
+                <h2>Content</h2>
+                <table>
+                  <thead>
+                    <tr>
+                      <th>File</th><th>Size</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${entries.map(e => `<tr><td>${e.filename}</td><td>${sizeToName(e.uncompressedSize)}</td></tr>`).join("")}
+                  </tbody>
+                </table>
+              `
+            })
+            break;
+          }
+
           default: 
             this.shadowRoot.getElementById("preview").innerText = "No preview for this file type"
         }
@@ -236,6 +261,12 @@ class Element extends HTMLElement {
   disconnectedCallback() {
   }
 
+}
+
+export function sizeToName(size){
+  return size < 1000 ? `${size} bytes`
+       : size < 1000000 ? `${Math.floor(size/1000)} KB`
+       : `${Math.floor(size/1000000)} MB`
 }
 
 window.customElements.define(elementName, Element);
