@@ -8,6 +8,7 @@ import "/components/field-list.mjs"
 import "/components/action-bar.mjs"
 import "/components/action-bar-item.mjs"
 import "/components/acl.mjs"
+import "/components/progress.mjs"
 import { confirmDialog } from "../../components/dialog.mjs"
 
 const template = document.createElement('template');
@@ -58,6 +59,7 @@ template.innerHTML = `
     #filestable td a{
       padding-right: 5px;
     }
+    .hidden{display: none;}
   </style>
   
   <action-bar>
@@ -78,6 +80,11 @@ template.innerHTML = `
         <tr>
           <td colspan="2">
             <input type="submit" value="Begin Upload!" id="uploadbutton"/>
+          </td>
+        </tr>
+        <tr class="hidden">
+          <td colspan="2">
+            <progress-bar complete-text="Upload complete!"></progress-bar>
           </td>
         </tr>
       </table>
@@ -204,7 +211,10 @@ class Element extends HTMLElement {
   }
 
   async doUploadFile(formData){
-    let files = await api.upload(`file/drop`, formData);
+    let progressBar = this.shadowRoot.querySelector("progress-bar")
+    progressBar.closest("tr").classList.remove("hidden")
+    let files = await api.upload(`file/drop`, formData, {onProgress: value => progressBar.setAttribute("value", value)});
+    setTimeout(() => progressBar.closest("tr").classList.add("hidden"), 1000);
     this.refreshData();
   }
   

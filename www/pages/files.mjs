@@ -9,6 +9,7 @@ import "/components/field.mjs"
 import "/components/field-edit.mjs"
 import "/components/acl.mjs"
 import "/components/action-bar-menu.mjs"
+import "/components/progress.mjs"
 import {on, off, fire} from "/system/events.mjs"
 import {state, apiURL, setPageTitle, goto, siteURL} from "/system/core.mjs"
 import {showDialog} from "/components/dialog.mjs"
@@ -76,7 +77,7 @@ template.innerHTML = `
 
   </action-bar>
 
-  <div id="container">    
+  <div id="container">   
     <h1 id="folder-name"></h1>
 
     <table>
@@ -88,6 +89,8 @@ template.innerHTML = `
   <dialog-component title="Upload file" id="new-dialog">
     <field-component label="Tags"><input id="new-tag" placeholder="tag1, tag2, ..."></input></field-component>
     <input type="file" multiple>
+    <br><br>
+    <progress-bar complete-text="Upload complete!"></progress-bar>
   </dialog-component>
   
   <dialog-component title="Add folder" id="add-folder-dialog">
@@ -330,22 +333,26 @@ class Element extends HTMLElement {
 }
 
 export async function uploadNewFile(dialog, {tags = [], folder = null, callback, acl = ""} = {}){
+  let progress = dialog.querySelector("progress-bar")
+  progress.classList.toggle("hidden", true)
+  let onProgress = value => progress.setAttribute("value", value)
   showDialog(dialog, {
     show: () => {
       dialog.querySelector("#new-tag").focus();
       dialog.querySelector("#new-tag").value = tags.join(", ");
     },
     ok: async (val) => {
+      progress.classList.toggle("hidden", false)
       let formData = new FormData();
       for(let file of dialog.querySelector("input[type=file]").files)
         formData.append("file", file);
       let tags = val.tag.split(",").map(t => t.trim())
       let files;
       if(folder){
-        files = await api.upload(`file/folder/${folder.id}/upload?tags=${encodeURI(tags.join(","))}`, formData);
+        files = await api.upload(`file/folder/${folder.id}/upload?tags=${encodeURI(tags.join(","))}`, formData, {onProgress});
       } else {
         if(tags.length < 1) throw "Must provide a tag";
-        files = await api.upload(`file/tag/${tags[0]}/upload?acl=${acl}`, formData);
+        files = await api.upload(`file/tag/${tags[0]}/upload?acl=${acl}`, formData, {onProgress});
       }
       if(tags.length > 1){
         for(let f of files){
