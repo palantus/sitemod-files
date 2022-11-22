@@ -154,7 +154,7 @@ class Element extends HTMLElement {
               id, name, type, created, modified, tags
             },
             ...on FolderType{
-              id, name, type, parentPath, created, tags
+              id, name, type, ${this.folderId ? '' : `parentPath, `}created, tags
             }
           }
         }
