@@ -48,6 +48,10 @@ class Folder extends Entity {
                                  : this.relsrev.parent?.map(c => FileOrFolder.from(c).toType()) || []
   }
 
+  accessibleContent(user, shareKey){
+    return this.content.filter(c => c.hasAccess(user, 'r', shareKey))
+  }
+
   getChildFolderNamed(name){
     return this.content.filter(f => f.name == name && f.tags.includes("folder"))[0]||null
   }
@@ -79,13 +83,21 @@ class Folder extends Entity {
     return "" + (acl.hasAccess(user, "r", shareKey)?'r':'') + (acl.hasAccess(user, "w", shareKey)?'w':'')
   }
 
+  get owner(){
+    return User.from(this.related.owner)
+  }
+
+  get userTags(){
+    return this.tags.filter(t => t.startsWith("user-")).map(t => t.substr(5))
+  }
+
   toObj(user, shareKey, includeContent = true){
     return {
       id: this._id,
       type: "folder",
       name: this.name,
-      ownerId: this.related.owner?.id || null,
-      tags: this.tags.filter(t => t.startsWith("user-")).map(t => t.substr(5)),
+      ownerId: this.owner?.id || null,
+      tags: this.userTags,
       rights: this.rights(user, shareKey),
       parentPath: this.parentPath,
       created: this.timestamp,

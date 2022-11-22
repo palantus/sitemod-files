@@ -7,6 +7,7 @@ import DataType from "../../../models/datatype.mjs";
 import stream from "stream";
 import crypto from "crypto";
 import mime from "mime-types"
+import User from "../../../models/user.mjs";
 
 export default class File extends Entity {
 
@@ -124,6 +125,20 @@ export default class File extends Entity {
     return query.type(File).tag(`user-${tag}`).tag("file").all
   }
 
+  get owner(){
+    return User.from(this.related.owner)
+  }
+
+  get userTags(){
+    return this.tags.filter(t => t.startsWith("user-")).map(t => t.substr(5))
+  }
+
+  getLinks(user, shareKey){
+    return {
+      download: `${global.sitecore.apiURL}/file/dl/${this._id}${this.name ? `/${encodeURI(this.name)}` : ''}?${shareKey ? `shareKey=${shareKey}` : `token=${userService.getTempAuthToken(user)}`}`,
+      raw: `${global.sitecore.apiURL}/file/raw/${this._id}${this.name ? `/${encodeURI(this.name)}` : ''}?token=${userService.getTempAuthToken(user)}`,
+    }
+  }
 
   toObj(user, shareKey) {
     return {
@@ -135,15 +150,12 @@ export default class File extends Entity {
       created: this.timestamp || null,
       modified: this.modified || null,
       mime: this.mime || null,
-      ownerId: this.related.owner?.id || null,
-      tags: this.tags.filter(t => t.startsWith("user-")).map(t => t.substr(5)),
+      ownerId: this.owner?.id || null,
+      tags: this.userTags,
       parentPath: this.parentPath,
       rights: this.rights(user, shareKey),
       expirationDate: this.expire || null,
-      links: {
-        download: `${global.sitecore.apiURL}/file/dl/${this._id}${this.name ? `/${encodeURI(this.name)}` : ''}?${shareKey ? `shareKey=${shareKey}` : `token=${userService.getTempAuthToken(user)}`}`,
-        raw: `${global.sitecore.apiURL}/file/raw/${this._id}${this.name ? `/${encodeURI(this.name)}` : ''}?token=${userService.getTempAuthToken(user)}`,
-      }
+      links: this.getLinks(user, shareKey)
     }
   }
 }

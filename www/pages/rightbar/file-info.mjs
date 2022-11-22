@@ -72,7 +72,17 @@ class Element extends HTMLElement {
     if(this.hasAttribute("type")){
       this.refreshUIFromType(this.getAttribute("type"))
     }
-    let file = this.file = await api.get(`file/${this.fileId}`)
+    let file = this.file = (await api.query(`{
+      fileOrFolder(id: ${this.fileId}){
+        ...on FileType{
+          id, name, parentPath, owner{id}, rights, created, modified, tags, type, mime, size, hash
+        }
+        ...on FolderType{
+          id, name, parentPath, owner{id}, rights, created, tags, type
+        }
+      }
+    }`)).fileOrFolder
+
 
     this.shadowRoot.getElementById('name').setAttribute("value", file.name)
     this.shadowRoot.getElementById('parentPath').setAttribute("value", file.parentPath||"<none>")
@@ -112,7 +122,12 @@ class Element extends HTMLElement {
 
   async downloadFile(){
     if(typeof window.showSaveFilePicker === "undefined") { //Firefox
-      window.open(this.file.links?.download)
+      let file = this.file = (await api.query(`{
+        file(id: ${this.fileId}){
+          links{download}
+        }
+      }`)).file
+      window.open(file.links?.download)
       return;
     }
     

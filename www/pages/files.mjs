@@ -142,8 +142,23 @@ class Element extends HTMLElement {
     }
   }
   async refreshData(){
+    /*
     this.folder = this.folderId ? await api.get(`file/${encodeURI(this.folderId)}`)
                                 : await api.get(`file/path${encodeURI(this.folderPath)}`)
+    */
+    this.folder = (await api.query(`{
+        folder(${this.folderId ? `id: ${this.folderId}` : `path: "${this.folderPath}"`}){
+          id, name, parentPath, owner{id}, rights,
+          content{
+            ...on FileType{
+              id, name, type, created, modified, tags
+            },
+            ...on FolderType{
+              id, name, type, parentPath, created, tags
+            }
+          }
+        }
+      }`)).folder
     if(!this.folder) return this.shadowRoot.querySelector('table tbody').innerHTML = ''
     this.shadowRoot.getElementById("folder-name").innerText = this.folder.parentPath == "/" && this.folder.name == "shared" ? "Shared files"
                                                             : this.folder.parentPath == "/home" ? "My files"
@@ -179,7 +194,7 @@ class Element extends HTMLElement {
       this.shadowRoot.getElementById("delete-all-btn").classList.remove("hidden")
       this.shadowRoot.getElementById("copy-webdav-btn").classList.remove("hidden")
     }
-    if(permissions.includes("file.edit") && user?.id != "guest" && this.folder.ownerId != user?.id){
+    if(permissions.includes("file.edit") && user?.id != "guest" && this.folder.owner?.id != user?.id){
       this.shadowRoot.getElementById("create-symbolic-link-btn").classList.remove("hidden")
     }
     this.shadowRoot.querySelector("action-bar").classList.toggle("hidden", !!!this.shadowRoot.querySelector("action-bar action-bar-item:not(.hidden)"))

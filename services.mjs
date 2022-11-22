@@ -3,6 +3,7 @@ import DataType from "../../models/datatype.mjs"
 import Folder from "./models/folder.mjs"
 import File from "./models/file.mjs"
 import { startCleanupService } from "./services/cleanup.mjs"
+import { query } from "entitystorage"
 
 export default async () => {
   // init
@@ -16,6 +17,10 @@ export default async () => {
   
   Folder.sharedRoot()
   Folder.root().acl = "r:shared;w:private"
+
+  // Remove empty tags:
+  query.tag("file").tag("user-").all.forEach(f => f.removeTag("user-"))
+  query.tag("folder").tag("user-").all.forEach(f => f.removeTag("user-"))
 
   return {
     cleanup: startCleanupService()
