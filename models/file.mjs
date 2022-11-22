@@ -72,6 +72,15 @@ export default class File extends Entity {
       this.mime = suggestion
     else
       this.mime = 'application/octet-stream'
+
+    this.updateMimeTypes()
+  }
+
+  updateMimeTypes(){
+    if(!this.mime) this.updateMime()
+    let mimeSplit = this.mime.split("/")
+    this.mimeType = mimeSplit[0]||null
+    this.mimeSubType = mimeSplit[1]||null
   }
 
   setExpiration(expire) {
@@ -118,6 +127,10 @@ export default class File extends Entity {
     for (let fb of FileBlob.search("tag:file !prop:hash blob")) {
       await fb.updateHash()
     }
+  }
+
+  static all() {
+    return query.type(File).tag("file").all
   }
 
   static allByTag(tag) {

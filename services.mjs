@@ -18,9 +18,15 @@ export default async () => {
   Folder.sharedRoot()
   Folder.root().acl = "r:shared;w:private"
 
-  // Remove empty tags:
+  // Update job 20221122 - Remove empty tags:
   query.tag("file").tag("user-").all.forEach(f => f.removeTag("user-"))
   query.tag("folder").tag("user-").all.forEach(f => f.removeTag("user-"))
+
+  // Update job 20221122 - Set mimetypes on all files
+  for(let file of File.all()){
+    if(file.mimeType) continue;
+    file.updateMimeTypes()
+  }
 
   return {
     cleanup: startCleanupService()

@@ -56,6 +56,8 @@ export const FileType = new GraphQLObjectType({
     modified: {type: GraphQLString},
     expirationDate: {type: GraphQLString, resolve: f => f.expire || null},
     mime: {type: GraphQLString},
+    mimeType: {type: GraphQLString},
+    mimeSubType: {type: GraphQLString},
     hash: {type: GraphQLString},
     size: {type: GraphQLInt},
     owner: {type: UserType},

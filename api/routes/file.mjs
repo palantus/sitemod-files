@@ -247,7 +247,10 @@ export default (app) => {
         file.updateMime()
     }
     if (req.body.filename !== undefined && req.body.filename) file.name = req.body.filename
-    if (typeof req.body.mime === "string" && req.body.mime) file.mime = req.body.mime
+    if (typeof req.body.mime === "string" && req.body.mime) {
+      file.mime = req.body.mime
+      file.updateMimeTypes()
+    }
 
     let tagList = !req.body.tags ? null : Array.isArray(req.body.tags) ? req.body.tags : typeof req.body.tags === "string" ? req.body.tags.split(",").map(t => t.trim()) : null;
     if (tagList) {
