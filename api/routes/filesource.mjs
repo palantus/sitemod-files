@@ -5,6 +5,7 @@ import Entity, {sanitize} from "entitystorage";
 import {validateAccess} from "../../../../services/auth.mjs"
 import service from "../../services/filesource.mjs"
 import fetch from 'node-fetch'
+import contentDisposition from 'content-disposition'
 import {service as userService} from "../../../../services/user.mjs"
 
 export default (app) => {
@@ -67,7 +68,7 @@ export default (app) => {
       let id = sanitize(req.params.id)
       let file = Entity.find(`(id:${id}|prop:"hash=${id}") tag:file !tag:folder`)
       if (file) {
-        res.setHeader('Content-disposition', `attachment; filename=${file.name}`);
+        res.setHeader('Content-disposition', contentDisposition(file.name));
         res.setHeader('Content-Type', file.mime);
         res.setHeader('Content-Length', file.size);
         file.blob.pipe(res)

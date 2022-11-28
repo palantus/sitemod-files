@@ -5,6 +5,7 @@ import { sanitize } from "entitystorage"
 import { default as fileService, tokens } from "../../services/file.mjs"
 import Archiver from 'archiver';
 import moment from "moment"
+import contentDisposition from 'content-disposition'
 import { validateAccess, noGuest } from "../../../../services/auth.mjs"
 import File from "../../models/file.mjs";
 import Folder from "../../models/folder.mjs";
@@ -187,7 +188,7 @@ export default (app) => {
     let file = File.lookupAccessible(sanitize(req.params.id), res.locals.user, res.locals.shareKey)
     if (!file) throw "Unknown file";
 
-    res.setHeader('Content-disposition', `attachment; filename=${file.name}`);
+    res.setHeader('Content-disposition', contentDisposition(file.name));
     res.setHeader('Content-Type', file.mime);
     res.setHeader('Content-Length', file.size);
 
@@ -199,7 +200,7 @@ export default (app) => {
     let file = File.lookupAccessible(sanitize(req.params.id), res.locals.user, res.locals.shareKey)
     if (!file) throw "Unknown file";
 
-    res.setHeader('Content-disposition', `inline; filename=${file.name}`);
+    res.setHeader('Content-disposition', contentDisposition(file.name, {type: "inline"}));
     res.setHeader('Content-Type', file.mime);
     res.setHeader('Content-Length', file.size);
 
@@ -217,7 +218,7 @@ export default (app) => {
     }
     res.writeHead(200, {
       'Content-Type': 'application/zip',
-      'Content-disposition': `attachment; filename=files_${moment().format("YYYY-MM-DD HH:mm:ss")}.zip`
+      'Content-disposition': contentDisposition(`files_${moment().format("YYYY-MM-DD HH:mm:ss")}.zip`)
     });
     zip.pipe(res)
     zip.finalize()
