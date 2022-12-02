@@ -123,6 +123,7 @@ export default {
       description: "Get a specific folder",
       resolve: (parent, args, context) => {
         ifPermissionThrow(context, "file.read", null)
+        if(args.path) Folder.userRoot(context.user) //Will create user root if missing
         let folder = args.id ? Folder.lookup(args.id) : args.path ? Folder.lookupByPath(args.path) : null;
         if(!folder) return null;
         if(!folder.hasAccess(context.user, 'r', context.shareKey)) throw "You do not have access to this folder"
