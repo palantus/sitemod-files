@@ -147,6 +147,7 @@ class Element extends HTMLElement {
           case "application/x-shellscript":
           case "text/x-log":
           case "text/markdown":
+          case "application/x-sql":
           case "text/plain": {
             let res = await api.fetch(`file/dl/${this.fileId}`)
             let text = await res.text()
