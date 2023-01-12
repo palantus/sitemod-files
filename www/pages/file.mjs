@@ -125,7 +125,10 @@ class Element extends HTMLElement {
     this.shadowRoot.getElementById("actions-container").classList.toggle("hidden", actions.length == 0)
     this.shadowRoot.getElementById("action-component-container").classList.toggle("hidden", true);
     if(actions.length > 0){
-      this.shadowRoot.getElementById("actions-container").innerHTML = actions.map(a => `<button class="styled" data-action-id="${a.id}">${a.title}</button>`).join("")
+      this.shadowRoot.getElementById("actions-container").innerHTML = actions
+                              .filter(a => !a.access || file.rights.includes(a.access))
+                              .filter(a => !a.permission || permissions.includes(a.permission))
+                              .map(a => `<button class="styled" data-action-id="${a.id}">${a.title}</button>`).join("")
     }
 
     this.shadowRoot.getElementById("preview-container").classList.toggle("hidden", file.type != "file")
