@@ -107,7 +107,7 @@ class Folder extends Entity {
   }
 
   delete(){
-    if(this.tags.includes("root") || this.tags.includes("sharedroot") || this.tags.includes("userroot")) return;
+    if(this.tags.includes("root") || this.tags.includes("sharedroot")) return;
     if(!this.isSymbolicLink()){
       this.content.forEach(c => c.delete())
     }
