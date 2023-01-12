@@ -1,6 +1,6 @@
 const elementName = 'file-page'
 
-import {state, setPageTitle} from "/system/core.mjs"
+import {state, setPageTitle, goto} from "/system/core.mjs"
 import api from "/system/api.mjs"
 import {userPermissions} from "/system/user.mjs"
 import "/components/field-edit.mjs"
@@ -12,6 +12,7 @@ import "/pages/tools/inspect-ld.mjs"
 import { confirmDialog } from "../../components/dialog.mjs"
 import { alertDialog } from "../../components/dialog.mjs"
 import { toggleInRightbar } from "/pages/rightbar/rightbar.mjs"
+import {getFileActions} from "/libs/actions.mjs"
 
 const template = document.createElement('template');
 template.innerHTML = `
@@ -39,6 +40,8 @@ template.innerHTML = `
     #maintitle {margin-bottom: 0px;}
     #subtitle-size, #subtitle-owner, #subtitle-modified{color: var(--accent-color-light);}
     video{width: 100%;}
+    #actions-container{margin-top: 10px;}
+    #action-component-container{margin-top: 10px;}
   </style>
 
   <action-bar>
@@ -53,6 +56,12 @@ template.innerHTML = `
       (<span id="subtitle-type"></span> owned by <span id="subtitle-owner"></span><span id="subtitle-size-container"> of size <span id="subtitle-size"></span></span>, last edited <span id="subtitle-modified"></span>)
     </div>
   
+    <div id="actions-container" class="hidden">
+    </div>
+
+    <div id="action-component-container" class="hidden">
+    </div>
+
     <div id="preview-container" class="hidden">
       <div id="preview"></div>
     </div>
@@ -68,10 +77,12 @@ class Element extends HTMLElement {
 
     this.deleteFile = this.deleteFile.bind(this)
     this.downloadFile = this.downloadFile.bind(this)
+    this.actionsClick = this.actionsClick.bind(this)
 
     this.shadowRoot.getElementById("delete-btn").addEventListener("click", this.deleteFile)
     this.shadowRoot.getElementById("download-btn").addEventListener("click", this.downloadFile)
     this.shadowRoot.getElementById("details-btn").addEventListener("click", () => toggleInRightbar("file-info", null, [["hideInfoButton", "true"], ["type", this.file.type], ["fileid", this.file.id]]))
+    this.shadowRoot.getElementById("actions-container").addEventListener("click", this.actionsClick)
 
     this.fileId = /([\da-zA-Z]+)/.exec(state().path.split("/")[2])[0]
   }
@@ -110,10 +121,24 @@ class Element extends HTMLElement {
       this.shadowRoot.getElementById("delete-btn").classList.remove("hidden")
     }
 
+    let actions = getFileActions(file.mime);
+    this.shadowRoot.getElementById("actions-container").classList.toggle("hidden", actions.length == 0)
+    this.shadowRoot.getElementById("action-component-container").classList.toggle("hidden", true);
+    if(actions.length > 0){
+      this.shadowRoot.getElementById("actions-container").innerHTML = actions.map(a => `<button class="styled" data-action-id="${a.id}">${a.title}</button>`).join("")
+    }
+
     this.shadowRoot.getElementById("preview-container").classList.toggle("hidden", file.type != "file")
 
     if(file.type == "file" && this.fileId != this.lastFileId){
-      this.shadowRoot.getElementById("preview").innerHTML = ""
+      this.refreshPreview();
+    }
+    this.lastFileId = this.fileId
+  }
+
+  async refreshPreview(){
+    let file = this.file
+    this.shadowRoot.getElementById("preview").innerHTML = ""
       if(file.type == "file"){
         switch(file.mime){
           case "image/gif":
@@ -225,8 +250,6 @@ class Element extends HTMLElement {
             this.shadowRoot.getElementById("preview").innerText = "No preview for this file type"
         }
       }
-    }
-    this.lastFileId = this.fileId
   }
   
   async deleteFile(){
@@ -253,6 +276,31 @@ class Element extends HTMLElement {
       await writableStream.write(file);
       await writableStream.close();
     }catch(err){}
+  }
+
+  actionsClick(e){
+    let id = e.target.getAttribute("data-action-id")
+    if(!id) return;
+
+
+    let action = getFileActions(this.file.mime).find(a => a.id == id);
+    if(!action) return;
+
+    if(action.path){
+      goto(`${path}?file-id=${this.file.id}`)
+    } else {
+      if(!this.shadowRoot.getElementById("action-component-container").classList.contains("hidden")){
+        this.refreshData()
+        this.refreshPreview()
+        return;
+      }
+      let container = this.shadowRoot.getElementById("action-component-container");
+      import(action.componentPath).then(() => {
+        container.innerHTML = `<${action.componentName} file-id="${this.file.id}"></${action.componentName}>`
+        container.classList.toggle("hidden", false)
+      })
+      this.shadowRoot.getElementById("preview-container").classList.toggle("hidden", true)
+    }
   }
 
   connectedCallback() {

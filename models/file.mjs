@@ -17,7 +17,7 @@ export default class File extends Entity {
     this.name = (name || "NewFile").replace(/[\/#]/g, '-')
     this.updateMime(mimetype || mime)
     this.size = isNaN(size) ? 0 : parseInt(size)
-    this.hash = md5 || hash
+    this.hash = md5 || hash || null
     this.timestamp = getTimestamp()
     this.setExpiration(expire)
     if (tag && typeof tag === "string")

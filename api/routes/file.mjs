@@ -163,6 +163,18 @@ export default (app) => {
     })
   })
 
+  route.post("/:id/content", noGuest, function (req, res, next) {
+    if (!validateAccess(req, res, { permission: "file.upload" })) return;
+    let file = File.lookupAccessible(sanitize(req.params.id), res.locals.user, res.locals.shareKey)
+    if (!file) throw "Unknown file";
+    file.setBlob(req).then(() => {
+      file.size = parseInt(req.header("Content-Length"))
+      file.updateHash().then(() => {
+        res.json({ id: file._id, hash: file.hash, name: file.name })
+      })
+    })
+  })
+
   route.post("/:id/folders", function (req, res, next) {
     if (!validateAccess(req, res, { permission: "file.edit" })) return;
     if (!sanitize(req.body.name)) throw "name is mandatory"
