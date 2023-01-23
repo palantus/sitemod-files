@@ -8,7 +8,7 @@ import "/components/field-ref.mjs"
 import "/components/field-list.mjs"
 import "/components/action-bar.mjs"
 import "/components/action-bar-item.mjs"
-import "/pages/tools/inspect-ld.mjs"
+import "/pages/ld2.mjs"
 import { confirmDialog } from "../../components/dialog.mjs"
 import { alertDialog } from "../../components/dialog.mjs"
 import { toggleInRightbar } from "/pages/rightbar/rightbar.mjs"
@@ -221,7 +221,7 @@ class Element extends HTMLElement {
 
           case "application/ld2": {
             this.shadowRoot.getElementById("preview").innerHTML = `
-              <inspect-ld-page hash=${this.file.hash} hidecontrols></inspect-ld-page>
+              <ld2-page hash=${this.file.hash} hidecontrols></ld2-page>
             `
             break;
           }

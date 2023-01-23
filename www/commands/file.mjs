@@ -68,6 +68,6 @@ export class InspectFile extends Command{
   }
 
   async run(){
-    goto(`/inspect-ld?hash=${this.hash}`)
+    goto(`/ld2?hash=${this.hash}`)
   }
 }
