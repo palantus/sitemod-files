@@ -8,7 +8,6 @@ import "/components/field-ref.mjs"
 import "/components/field-list.mjs"
 import "/components/action-bar.mjs"
 import "/components/action-bar-item.mjs"
-import "/pages/ld2.mjs"
 import { confirmDialog } from "../../components/dialog.mjs"
 import { alertDialog } from "../../components/dialog.mjs"
 import { toggleInRightbar } from "/pages/rightbar/rightbar.mjs"
@@ -219,13 +218,6 @@ class Element extends HTMLElement {
             break;
           }
 
-          case "application/ld2": {
-            this.shadowRoot.getElementById("preview").innerHTML = `
-              <ld2-page hash=${this.file.hash} hidecontrols></ld2-page>
-            `
-            break;
-          }
-
           case "application/zip": {
             this.shadowRoot.getElementById("preview").innerHTML = "<p>Loading preview...</p>"
             let res = await api.fetch(`file/dl/${this.fileId}`)
@@ -289,8 +281,8 @@ class Element extends HTMLElement {
     let action = getFileActions(this.file.mime).find(a => a.id == id);
     if(!action) return;
 
-    if(action.path){
-      goto(`${path}?file-id=${this.file.id}`)
+    if(action.gotoPath){
+      goto(`${action.gotoPath}?file-id=${this.file.id}`)
     } else {
       if(!this.shadowRoot.getElementById("action-component-container").classList.contains("hidden")){
         this.refreshData()
