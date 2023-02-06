@@ -1,8 +1,5 @@
 import SearchQueryParser from "searchqueryparser"
-import Entity, { isFilterValid } from "entitystorage"
-import fileSourceService from "./filesource.mjs"
-import { getTimestamp } from "../../../tools/date.mjs"
-import fetch from "node-fetch"
+import { isFilterValid } from "entitystorage"
 import File from "../models/file.mjs"
 import FileOrFolder from "../models/fileorfolder.mjs"
 
@@ -51,23 +48,7 @@ class Service {
     if (file) {
       return {filename: file.name, mime: file.mime, size: file.size, blob: file.blob}
     }
-
-    // Then check all file sources
-    file = await fileSourceService.findFile(hash)
-    if (!file) {
-      return null;
-    }
-    let filename = file.details?.result?.filename || file.details?.filename || null
-    let src = Entity.find(`tag:filesource id:${file.fileSource.id}`)
-    let downloadUrl = src.downloadUrl.replace("$hash$", file.id);
-    let url = fileSourceService.applyApiKeyParm(downloadUrl, Entity.find(`tag:filesource id:${src._id}`).apiKeyParm)
-
-    let r = await fetch(url)
-    
-    let size = file.details?.result?.size || file.details?.size || r.headers.get("Content-Length") || null
-    let mime = file.details?.result?.mime || file.details?.mime || r.headers.get("Content-Type") || null
-    
-    return {filename: filename, mime, size, blob: await r.blob()}
+    return null;
   }
 
   parseE(e) {
