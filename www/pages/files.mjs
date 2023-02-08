@@ -307,7 +307,6 @@ class Element extends HTMLElement {
 
   editRowClicked(img, tr, id){
     let tdName = tr.querySelector("td:nth-child(2)")
-    let tdTags = tr.querySelector("td:nth-child(5)")
     let fileObj = this.folder.content.find(t => t.id == id)
 
     if(tr.hasAttribute("edit-mode")){
@@ -316,15 +315,11 @@ class Element extends HTMLElement {
       fileObj.name = tdName.querySelector("field-edit").getValue()
       tdName.innerHTML = `<field-ref ref="${fileObj.type == "folder" ? `/files${(fileObj.parentPath&&fileObj.parentPath!="/") ? encodeURI(fileObj.parentPath):""}/${encodeURI(fileObj.name)}` : `/file/${fileObj.id}`}">${fileObj.name}</field-ref>`
 
-      fileObj.tags = tdTags.querySelector("field-edit").getValue().split(",").map(t => t.trim())
-      tdTags.innerHTML = fileObj.tags.join(", ")
-
       img.src = "/img/edit.ico"
     } else {
       tr.setAttribute("edit-mode", "true")
 
       tdName.innerHTML = `<field-edit type="text" value="${fileObj.name}" patch="file/${id}" field="name"></field-edit>`
-      tdTags.innerHTML = `<field-edit type="text" value="${fileObj.tags.join(", ")}" patch="file/${id}" field="tags"></field-edit>`
       img.src = "/img/cancel.svg"
     }
   }
