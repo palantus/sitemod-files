@@ -58,7 +58,7 @@ class DavHTTPBasicAuthentication {
 
     this.userManager.getUserByNamePassword(username, password, (e, user) => {
       if (e){
-        console.log(e)
+        //console.log(e)
         onError(webdav.Errors.BadAuthentication);
       } else {
         callback(null, user);
