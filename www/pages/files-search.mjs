@@ -11,6 +11,7 @@ import {on, off, fire} from "/system/events.mjs"
 import {state, pushStateQuery, apiURL} from "/system/core.mjs"
 import { confirmDialog } from "../../components/dialog.mjs"
 import "/components/data/searchhelp.mjs"
+import {sizeToName} from "./file.mjs"
 
 const template = document.createElement('template');
 template.innerHTML = `
@@ -27,7 +28,7 @@ template.innerHTML = `
     table thead tr{
       border-bottom: 1px solid gray;
     }
-    img.iconbtn{width: 15px; cursor: pointer; margin-right: 2px;}
+    img.iconbtn{width: 15px; cursor: pointer; margin-right: 2px; vertical-align: middle; filter: invert(1);}
 
     table thead th:nth-child(1){width: 25px}
     table thead th:nth-child(2){width: 450px}
@@ -53,7 +54,7 @@ template.innerHTML = `
               <th></th>
               <th>Filename</th>
               <th>Size</th>
-              <th>Mime / filter</th>
+              <th>Type</th>
               <th>Tags</th>
               <th></th>
             </tr>
@@ -105,7 +106,7 @@ class Element extends HTMLElement {
         <tr class="result" data-id="${f.id}" data-name="${f.name}">
           <td><img style="width: 20px;" src="/img/${f.type == "folder" ? "folder.svg" : "file-white.png"}"></td>
           <td><field-ref ref="${f.type == "folder" ? `/files?filter=folder:${f.id}` : `/file/${f.id}`}">${f.name}</field-ref></td>
-          <td>${f.size?`${Math.floor(f.size/1000)} KB`:""}</td>
+          <td>${f.size ? sizeToName(f.size) : ""}</td>
           <td>${f.mime||f.filter||""}</td>
           <td>${f.tags.join(", ")}</td>
           <td>
@@ -176,7 +177,6 @@ class Element extends HTMLElement {
 
   editRowClicked(img, tr, id){
     let tdName = tr.querySelector("td:nth-child(2)")
-    let tdFilter = tr.querySelector("td:nth-child(4)")
     let tdTags = tr.querySelector("td:nth-child(5)")
     let fileObj = this.files.find(t => t.id == id)
 
@@ -186,11 +186,6 @@ class Element extends HTMLElement {
       fileObj.filename = tdName.querySelector("field-edit").getValue()
       tdName.innerHTML = `<field-ref ref="${fileObj.type == "folder" ? `/files?filter=folder:${fileObj.id}` : `/file/${fileObj.id}`}">${fileObj.filename}</field-ref>`
 
-      if(fileObj.type == "folder"){
-        fileObj.filter = tdFilter.querySelector("field-edit").getValue()
-        tdFilter.innerText = fileObj.filter
-      }
-
       fileObj.tags = tdTags.querySelector("field-edit").getValue().split(",").map(t => t.trim())
       tdTags.innerHTML = fileObj.tags.join(", ")
 
@@ -199,9 +194,6 @@ class Element extends HTMLElement {
       tr.setAttribute("edit-mode", "true")
 
       tdName.innerHTML = `<field-edit type="text" value="${fileObj.name}" patch="file/${id}" field="filename"></field-edit>`
-      if(fileObj.type == "folder"){
-        tdFilter.innerHTML = `<field-edit type="text" value="${fileObj.filter||""}" patch="file/${id}" field="filter"></field-edit>`
-      }
       tdTags.innerHTML = `<field-edit type="text" value="${fileObj.tags.join(", ")}" patch="file/${id}" field="tags"></field-edit>`
       img.src = "/img/cancel.svg"
     }
