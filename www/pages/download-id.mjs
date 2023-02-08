@@ -80,7 +80,6 @@ class Element extends HTMLElement {
     if(this.federationSource){
       let {token} = await api.get("me/token")
       window.open(`${apiURL()}/federation/${this.federationSource}/api/file/download/${this.fileId}?token=${token}`)
-      console.log(`${apiURL()}/federation/${this.federationSource}/api/file/download/${this.fileId}?token=${token}`)
     } else {
       window.open(this.file.links?.download) 
     }
