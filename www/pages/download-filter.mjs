@@ -50,10 +50,12 @@ class Element extends HTMLElement {
     this.filter = state().query.filter
     setPageTitle("");
     let src = this.federationSource = state().query.src
+    let files;
     try{
-      let files = this.files = (await api.get(src ? `federation/${src}/api/file/query?filter=${this.filter}` : `file/query?filter=${this.filter}`, {redirectAuth: false})).filter(f => f.type == "file")
+      files = this.files = (await api.get(src ? `federation/${src}/api/file/query?filter=${this.filter}` : `file/query?filter=${this.filter}`, {redirectAuth: false})).filter(f => f.type == "file")
     } catch(err){
-      new Toast({text: `Error: ${err.status} ${err.statusText}`})
+      new Toast({text: `Error: ${err?.status||err} ${err?.statusText}`})
+      return;
     }
     
     if(files.length < 1){

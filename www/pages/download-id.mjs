@@ -5,6 +5,7 @@ import api from "/system/api.mjs"
 import "/components/field-ref.mjs"
 import { alertDialog } from "../../components/dialog.mjs"
 import {sizeToName} from "./file.mjs"
+import Toast from "/components/toast.mjs"
 
 const template = document.createElement('template');
 template.innerHTML = `
@@ -48,7 +49,13 @@ class Element extends HTMLElement {
   async refreshData(id = this.fileId){
     setPageTitle("");
     let src = this.federationSource = state().query.src
-    let file = this.file = await api.get(src ? `federation/${src}/api/file/${this.fileId}` : `file/${this.fileId}`, {redirectAuth: false})
+    let file;
+    try{
+      file = this.file = await api.get(src ? `federation/${src}/api/file/${this.fileId}` : `file/${this.fileId}`, {redirectAuth: false})
+    } catch(err){
+      new Toast({text: `Error: ${err?.status||err} ${err?.statusText}`})
+      return;
+    }
     
     if(!file){
       alertDialog("This file or folder could not be found. Either it doesn't exist or you do not have access to it")
