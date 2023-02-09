@@ -1,4 +1,4 @@
-const elementName = 'file-download-page'
+const elementName = 'file-download-filter-page'
 
 import {state, setPageTitle, apiURL} from "/system/core.mjs"
 import api from "/system/api.mjs"
