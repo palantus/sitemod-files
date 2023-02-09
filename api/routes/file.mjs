@@ -228,9 +228,11 @@ export default (app) => {
     for (let file of files) {
       zip.append(file.blob, { name: file.name })
     }
+    let filename = req.query.filename || `files_${moment().format("YYYY-MM-DD HH:mm:ss")}.zip`
+    if(!filename.endsWith(".zip")) filename += ".zip";
     res.writeHead(200, {
       'Content-Type': 'application/zip',
-      'Content-disposition': contentDisposition(`files_${moment().format("YYYY-MM-DD HH:mm:ss")}.zip`)
+      'Content-disposition': contentDisposition(filename)
     });
     zip.pipe(res)
     zip.finalize()

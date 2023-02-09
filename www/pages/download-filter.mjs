@@ -63,11 +63,13 @@ class Element extends HTMLElement {
       return;
     }
 
-    setPageTitle(`${files.length} files`);
+    this.filename = state().query.name || "files.zip";
+
+    setPageTitle(this.filename);
 
     let sizeName = sizeToName(files.reduce((sum, cur) => sum+cur.size, 0))
 
-    this.shadowRoot.getElementById('title').innerText = state().query.name || "files.zip"
+    this.shadowRoot.getElementById('title').innerText = this.filename
     this.shadowRoot.getElementById('subtitle-count').innerText = files.length;
     this.shadowRoot.getElementById('subtitle-size').innerText = sizeName
   }
@@ -76,9 +78,9 @@ class Element extends HTMLElement {
     if(this.files.length < 1) return alertDialog("No files found");
     let {token} = await api.get("me/token")
     if(this.sourcePath){
-      window.open(`${apiURL()}/${this.sourcePath}/file/query/dl?filter=${this.filter}&token=${token}`)
+      window.open(`${apiURL()}/${this.sourcePath}/file/query/dl?filter=${this.filter}&token=${token}&name=${this.filename}`)
     } else {
-      window.open(`${apiURL()}/file/query/dl?filter=${this.filter}&token=${token}`)
+      window.open(`${apiURL()}/file/query/dl?filter=${this.filter}&token=${token}&name=${this.filename}`)
     }
   }
 
