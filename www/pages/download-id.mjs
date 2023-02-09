@@ -48,10 +48,10 @@ class Element extends HTMLElement {
 
   async refreshData(id = this.fileId){
     setPageTitle("");
-    let src = this.federationSource = state().query.src
+    let src = this.sourcePath = state().query.src
     let file;
     try{
-      file = this.file = await api.get(src ? `federation/${src}/api/file/${this.fileId}` : `file/${this.fileId}`, {redirectAuth: false})
+      file = this.file = await api.get(src ? `${src}/file/${this.fileId}` : `file/${this.fileId}`, {redirectAuth: false})
     } catch(err){
       new Toast({text: `Error: ${err?.status||err} ${err?.statusText}`})
       return;
@@ -84,9 +84,9 @@ class Element extends HTMLElement {
   }
 
   async downloadFile(){
-    if(this.federationSource){
+    if(this.sourcePath){
       let {token} = await api.get("me/token")
-      window.open(`${apiURL()}/federation/${this.federationSource}/api/file/download/${this.fileId}?token=${token}`)
+      window.open(`${apiURL()}/${this.sourcePath}/file/download/${this.fileId}?token=${token}`)
     } else {
       window.open(this.file.links?.download) 
     }

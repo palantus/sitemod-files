@@ -49,10 +49,10 @@ class Element extends HTMLElement {
   async refreshData(){
     this.filter = state().query.filter
     setPageTitle("");
-    let src = this.federationSource = state().query.src
+    let src = this.sourcePath = state().query.src
     let files;
     try{
-      files = this.files = (await api.get(src ? `federation/${src}/api/file/query?filter=${this.filter}` : `file/query?filter=${this.filter}`, {redirectAuth: false})).filter(f => f.type == "file")
+      files = this.files = (await api.get(src ? `${src}/file/query?filter=${this.filter}` : `file/query?filter=${this.filter}`, {redirectAuth: false})).filter(f => f.type == "file")
     } catch(err){
       new Toast({text: `Error: ${err?.status||err} ${err?.statusText}`})
       return;
@@ -75,8 +75,8 @@ class Element extends HTMLElement {
   async downloadFiles(){
     if(this.files.length < 1) return alertDialog("No files found");
     let {token} = await api.get("me/token")
-    if(this.federationSource){
-      window.open(`${apiURL()}/federation/${this.federationSource}/api/file/query/dl?filter=${this.filter}&token=${token}`)
+    if(this.sourcePath){
+      window.open(`${apiURL()}/${this.sourcePath}/file/query/dl?filter=${this.filter}&token=${token}`)
     } else {
       window.open(`${apiURL()}/file/query/dl?filter=${this.filter}&token=${token}`)
     }
