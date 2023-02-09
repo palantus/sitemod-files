@@ -48,7 +48,7 @@ class Element extends HTMLElement {
   async refreshData(id = this.fileId){
     setPageTitle("");
     let src = this.federationSource = state().query.src
-    let file = this.file = await api.get(src ? `federation/${src}/api/file/${this.fileId}` : `file/${this.fileId}`)
+    let file = this.file = await api.get(src ? `federation/${src}/api/file/${this.fileId}` : `file/${this.fileId}`, {redirectAuth: false})
     
     if(!file){
       alertDialog("This file or folder could not be found. Either it doesn't exist or you do not have access to it")

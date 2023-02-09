@@ -49,7 +49,7 @@ class Element extends HTMLElement {
     this.filter = state().query.filter
     setPageTitle("");
     let src = this.federationSource = state().query.src
-    let files = this.files = (await api.get(src ? `federation/${src}/api/file/query?filter=${this.filter}` : `file/query?filter=${this.filter}`)).filter(f => f.type == "file")
+    let files = this.files = (await api.get(src ? `federation/${src}/api/file/query?filter=${this.filter}` : `file/query?filter=${this.filter}`, {redirectAuth: false})).filter(f => f.type == "file")
     
     if(files.length < 1){
       alertDialog("No files could not be found. Either they doesn't exist or you do not have access to any of them")
