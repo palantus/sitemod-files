@@ -8,6 +8,7 @@ import stream from "stream";
 import crypto from "crypto";
 import mime from "mime-types"
 import User from "../../../models/user.mjs";
+import Share from "../../../models/share.mjs";
 
 export default class File extends Entity {
 
@@ -151,6 +152,11 @@ export default class File extends Entity {
       download: `${global.sitecore.apiURL}/file/dl/${this._id}${this.name ? `/${encodeURI(this.name)}` : ''}?${shareKey ? `shareKey=${shareKey}` : `token=${userService.getTempAuthToken(user)}`}`,
       raw: `${global.sitecore.apiURL}/file/raw/${this._id}${this.name ? `/${encodeURI(this.name)}` : ''}?token=${userService.getTempAuthToken(user)}`,
     }
+  }
+  
+  delete(){
+    this.rels.share?.forEach(s => Share.from(s).delete())
+    super.delete()
   }
 
   toObj(user, shareKey) {

@@ -4,6 +4,7 @@ import ACL from "../../../models/acl.mjs"
 import DataType from "../../../models/datatype.mjs";
 import User from "../../../models/user.mjs";
 import { getTimestamp } from "../../../tools/date.mjs";
+import Share from "../../../models/share.mjs";
 
 class Folder extends Entity {
   initNew(name, owner, parentFolder, {linkTo = null} = {}){
@@ -111,6 +112,7 @@ class Folder extends Entity {
     if(!this.isSymbolicLink()){
       this.content.forEach(c => c.delete())
     }
+    this.rels.share?.forEach(s => Share.from(s).delete())
     super.delete()
   }
 
