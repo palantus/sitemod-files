@@ -48,7 +48,13 @@ class Element extends HTMLElement {
 
   async refreshData(){
     this.filter = state().query.filter
+
+    // Reset view
     setPageTitle("");
+    this.shadowRoot.getElementById('title').innerText = ''
+    this.shadowRoot.getElementById('subtitle-count').innerText = '';
+    this.shadowRoot.getElementById('subtitle-size').innerText = ''
+
     let src = this.sourcePath = state().query.src
     let files;
     try{
