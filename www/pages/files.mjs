@@ -257,13 +257,15 @@ class Element extends HTMLElement {
   }
 
   async downloadFolder(){
+    let suggestedName = this.folder?.name ? `${this.folder.name.replace(/[^a-zA-ZæøåÆØÅ0-9\-_.,*]/g, '_')}.zip` : "files.zip";
     if(typeof window.showSaveFilePicker === "undefined") {
       let {token} = await api.get("me/token")
-      window.open(`${apiURL()}/file/query/dl?filter=folder:${this.folder.id}&token=${token}`)
+      window.open(`${apiURL()}/file/query/dl?filter=folder:${this.folder.id}&token=${token}&name=${suggestedName}`)
       return;
     }
     
     const options = {
+      suggestedName,
       types: [
         {
           description: 'Zip Files',
