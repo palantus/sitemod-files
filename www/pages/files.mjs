@@ -275,7 +275,7 @@ class Element extends HTMLElement {
     };
 
     let filePickerPromise = window.showSaveFilePicker(options);
-    let file = await (await api.fetch(`file/query/dl?filter=${this.lastQuery}`)).blob()
+    let file = await (await api.fetch(`file/query/dl?filter=folder:${this.folder.id}`)).blob()
     const newHandle = await filePickerPromise;
     const writableStream = await newHandle.createWritable();
     await writableStream.write(file);
@@ -283,7 +283,7 @@ class Element extends HTMLElement {
   }
 
   async deleteAll(){
-    if(!await confirmDialog(`Are you sure that you want to delete ALL files currently listed (filter "${this.lastQuery}")?`)) return;
+    if(!await confirmDialog(`Are you sure that you want to delete ALL files currently listed (filter "folder:${this.folder.id}")?`)) return;
     await api.del(`file/query?filter=folder:${this.folder.id}`)
     this.refreshData()
   }
