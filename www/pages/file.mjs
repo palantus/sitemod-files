@@ -105,10 +105,11 @@ class Element extends HTMLElement {
 
       this.shadowRoot.getElementById('subtitle-size').innerText = sizeName
     }
+    let fileDate = (file.modified||file.created||"");
 
     this.shadowRoot.getElementById('subtitle-type').innerText = file.type == "folder" ? "Folder" : "File"
     this.shadowRoot.getElementById('subtitle-owner').innerText = file.ownerId
-    this.shadowRoot.getElementById('subtitle-modified').innerText = (file.modified||file.created||"").replace("T", " ").substring(0, 19)
+    this.shadowRoot.getElementById('subtitle-modified').innerText = fileDate.replace("T", " ").substring(0, 19)
     this.shadowRoot.getElementById('subtitle-size-container').classList.toggle("hidden", file.type != "file")
     
     this.shadowRoot.getElementById('title').innerText = file.name
@@ -132,10 +133,11 @@ class Element extends HTMLElement {
 
     this.shadowRoot.getElementById("preview-container").classList.toggle("hidden", file.type != "file")
 
-    if(file.type == "file" && this.fileId != this.lastFileId){
+    if(file.type == "file" && (this.fileId != this.lastFileId || this.lastFileDate != fileDate)){
       this.refreshPreview();
     }
     this.lastFileId = this.fileId
+    this.lastFileDate = fileDate
   }
 
   async refreshPreview(){

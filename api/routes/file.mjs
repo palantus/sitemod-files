@@ -172,6 +172,7 @@ export default (app) => {
       file.updateHash().then(() => {
         res.json({ id: file._id, hash: file.hash, name: file.name })
       })
+      file.markModified();
     })
   })
 
