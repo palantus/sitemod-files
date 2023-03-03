@@ -9,6 +9,7 @@ import crypto from "crypto";
 import mime from "mime-types"
 import User from "../../../models/user.mjs";
 import Share from "../../../models/share.mjs";
+import Setup from "./setup.mjs";
 
 export default class File extends Entity {
 
@@ -157,6 +158,10 @@ export default class File extends Entity {
   delete(){
     this.rels.share?.forEach(s => Share.from(s).delete())
     super.delete()
+  }
+
+  getFilenameForContentDisposition(){
+    return Setup.lookup().onlyASCIIHeaders ? encodeURIComponent(this.name) : this.name
   }
 
   toObj(user, shareKey) {

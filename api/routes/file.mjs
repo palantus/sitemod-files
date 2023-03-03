@@ -201,7 +201,7 @@ export default (app) => {
     let file = File.lookupAccessible(sanitize(req.params.id), res.locals.user, res.locals.shareKey)
     if (!file) return res.sendStatus(404);
 
-    res.setHeader('Content-disposition', contentDisposition(file.name));
+    res.setHeader('Content-disposition', contentDisposition(file.getFilenameForContentDisposition()));
     res.setHeader('Content-Type', file.mime);
     res.setHeader('Content-Length', file.size);
 
@@ -213,7 +213,7 @@ export default (app) => {
     let file = File.lookupAccessible(sanitize(req.params.id), res.locals.user, res.locals.shareKey)
     if (!file) throw "Unknown file";
 
-    res.setHeader('Content-disposition', contentDisposition(file.name, {type: "inline"}));
+    res.setHeader('Content-disposition', contentDisposition(file.getFilenameForContentDisposition(), {type: "inline"}));
     res.setHeader('Content-Type', file.mime);
     res.setHeader('Content-Length', file.size);
 
