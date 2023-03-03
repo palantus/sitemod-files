@@ -199,7 +199,7 @@ export default (app) => {
   route.get(['/dl/:id', '/dl/:id/:filename', '/download/:id', '/download/:id/:filename'], function (req, res, next) {
     if (!validateAccess(req, res, { permission: "file.read" })) return;
     let file = File.lookupAccessible(sanitize(req.params.id), res.locals.user, res.locals.shareKey)
-    if (!file) throw "Unknown file";
+    if (!file) return res.sendStatus(404);
 
     res.setHeader('Content-disposition', contentDisposition(file.name));
     res.setHeader('Content-Type', file.mime);
