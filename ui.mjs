@@ -8,7 +8,7 @@ export let menu = [
   {
     title: "Files",
     items: [
-      {title: "Drop", path: "/drop"},
+      {title: "Drop", path: "/drop", permission: "file.drop"},
       {title: "Shared files", path: "/files/shared", permission: "file.read"}
     ]
   }
