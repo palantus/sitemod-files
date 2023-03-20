@@ -2,7 +2,7 @@ export let menu = [
   {
     title: "Me",
     items: [
-      {title: "Files", path: "/files/mine", permission: "file.read"}
+      {title: "Files", path: "/files/mine", permission: "file.edit"}
     ]
   },
   {
