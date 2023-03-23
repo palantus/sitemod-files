@@ -13,6 +13,7 @@ import FileOrFolder from "../../models/fileorfolder.mjs";
 import Share from "../../../../models/share.mjs";
 import ACL from "../../../../models/acl.mjs";
 import DataType from "../../../../models/datatype.mjs";
+import Setup from "../../models/setup.mjs";
 
 export default (app) => {
 
@@ -61,6 +62,7 @@ export default (app) => {
     for (let filedef in req.files) {
       let fileObj = Array.isArray(req.files[filedef]) ? req.files[filedef] : [req.files[filedef]]
       for (let f of fileObj) {
+        if(!Setup.userCanStoreSize(res.locals.user, f.size)) throw `File ${f.name} is too large and would cause you to exceed your allowed quota. Upload aborted.`;
         let file = new File({ ...f, tag: req.params.tag, owner: res.locals.user })
         if(req.query.acl) {
           let acl = new ACL(file, DataType.lookup("file"))
@@ -80,6 +82,7 @@ export default (app) => {
     for (let filedef in req.files) {
       let fileObj = Array.isArray(req.files[filedef]) ? req.files[filedef] : [req.files[filedef]]
       for (let f of fileObj) {
+        if(!Setup.userCanStoreSize(res.locals.user, f.size)) throw `File ${f.name} is too large and would cause you to exceed your allowed quota. Upload aborted.`;
         let file = new File({ ...f, tag: "drop", expire: expirationDate.toISOString(), owner: res.locals.user })
         let acl = new ACL(file, DataType.lookup("file"))
         if(req.query.acl) {
@@ -128,6 +131,7 @@ export default (app) => {
     for (let filedef in req.files) {
       let fileObj = Array.isArray(req.files[filedef]) ? req.files[filedef] : [req.files[filedef]]
       for (let f of fileObj) {
+        if(!Setup.userCanStoreSize(res.locals.user, f.size)) throw `File ${f.name} is too large and would cause you to exceed your allowed quota. Upload aborted.`;
         let origName = f.name
         let i = 1;
         while (folder.hasChildNamed(f.name)){
@@ -157,6 +161,7 @@ export default (app) => {
       mimetype: req.query.mime || req.headers['content-type'] || "application/x-binary", 
       data: req 
     }
+    if(!Setup.userCanStoreSize(res.locals.user, f.size)) throw `File ${f.name} is too large and would cause you to exceed your allowed quota. Upload aborted.`;
     let file = new File({ ...f, tags: req.query.tags?.split(",").map(t => t.trim() || []), owner: res.locals.user })
     req.on("end", () => {
       res.json({ id: file._id, hash: file.hash, name: f.name })
@@ -167,8 +172,10 @@ export default (app) => {
     if (!validateAccess(req, res, { permission: "file.upload" })) return;
     let file = File.lookupAccessible(sanitize(req.params.id), res.locals.user, res.locals.shareKey)
     if (!file) throw "Unknown file";
+    let fileSize = parseInt(req.header("Content-Length"));
+    if(!Setup.userCanStoreSize(res.locals.user, fileSize)) throw `File ${file.name} is too large and would cause you to exceed your allowed quota. Upload aborted.`;
     file.setBlob(req).then(() => {
-      file.size = parseInt(req.header("Content-Length"))
+      file.size = fileSize
       file.updateHash().then(() => {
         res.json({ id: file._id, hash: file.hash, name: file.name })
       })

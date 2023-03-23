@@ -315,5 +315,12 @@ export function sizeToName(size){
        : `${Math.floor(size/1000000)} MB`
 }
 
+export function sizeToNameMB(size){
+  return size < 0.01 ? `${size*1000000} bytes`
+       : size < 10 ? `${Math.floor(size*1000)} KB`
+       : size < 10000 ? `${Math.floor(size)} MB`
+       : `${Math.floor(size/1000)} GB`
+}
+
 window.customElements.define(elementName, Element);
 export {Element, elementName as name}

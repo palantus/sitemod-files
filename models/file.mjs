@@ -140,6 +140,11 @@ export default class File extends Entity {
     return query.type(File).tag(`user-${tag}`).tag("file").all
   }
 
+  static allByOwner(user) {
+    if (!user) return [];
+    return query.type(File).tag("file").relatedTo(user, "owner").all
+  }
+
   get owner(){
     return User.from(this.related.owner)
   }
