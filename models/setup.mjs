@@ -30,7 +30,7 @@ export default class Setup extends Entity{
 
   static userCanStoreSize(user, size){
     let quota = this.userQuotaMB(user)
-    if(isNaN(quota)) return true;
+    if(quota === undefined || quota === null) return true;
     return (Setup.userUsageMB(user) + ((isNaN(size) ? 0 : parseInt(size)) / 1_000_000)) <= quota
   }
 
