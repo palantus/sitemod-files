@@ -1,13 +1,10 @@
 const elementName = 'rightbar-file-info-component'
 
 import api from "/system/api.mjs"
-import "/components/field.mjs"
 import "/components/field-edit.mjs"
-import "/components/field-list.mjs"
 import {on, off} from "/system/events.mjs"
 import { closeRightbar } from "/pages/rightbar/rightbar.mjs"
-import {goto, state} from "/system/core.mjs"
-import { confirmDialog } from "/components/dialog.mjs"
+import {goto} from "/system/core.mjs"
 import "/components/acl.mjs"
 
 const template = document.createElement('template');
@@ -89,7 +86,7 @@ class Element extends HTMLElement {
     this.shadowRoot.getElementById('created').setAttribute("value", file.created?.replace("T", " ").substring(0, 19) || "")
     this.shadowRoot.getElementById('modified').setAttribute("value", file.modified?.replace("T", " ").substring(0, 19) || "<never>")
     this.shadowRoot.getElementById('tags').setAttribute("value", file.tags.join(", "))
-    this.shadowRoot.getElementById('wiki-ref').setAttribute("value", `[${file.name?.replace(/\_/g, "\\_")}](/${file.type}/${file.id})`)
+    this.shadowRoot.getElementById('wiki-ref').setAttribute("value", `[${file.name?.replace(/\_/g, "\\_")}](/${file.type}/${file.hash||file.id})`)
 
     if(file.type == "file"){
       this.shadowRoot.getElementById('mime').setAttribute("value", file.mime)
