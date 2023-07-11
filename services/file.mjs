@@ -8,6 +8,9 @@ export let tokens = [
   {keywords: ["tag"], title: "Search for tag", resolve: (token, tag, service) => {
     return `tag:"user-${token}"`
   }},
+  {keywords: ["hash"], title: "Search for hash", resolve: (token, tag, service) => {
+    return `prop:"hash=${token}"`
+  }},
   {keywords: ["type"], title: "Search for type (folder or file)", resolve: token => token == "folder" ? "tag:folder" : "tag:file"},
   {keywords: ["ext"], title: "Search for extension", resolve: token => `prop:"name=.${token}^"`},
   {keywords: ["folder"], title: "Search for folder content", resolve: (token, tag, service) => {
