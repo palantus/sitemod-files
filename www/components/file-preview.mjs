@@ -49,7 +49,9 @@ class Element extends HTMLElement {
   }
 
   async refreshData(id = this.fileId){
+    if(id != this.lastFileId) this.shadowRoot.getElementById("preview").innerHTML = "";
     if(!id) return;
+
     let file = this.file = await api.get(this.federationId ? `federation/${this.federationId}/api/file/${this.fileId}` : `file/${this.fileId}`)
     
     if(!file){
