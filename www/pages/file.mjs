@@ -8,6 +8,8 @@ import "/components/field-ref.mjs"
 import "/components/field-list.mjs"
 import "/components/action-bar.mjs"
 import "/components/action-bar-item.mjs"
+import "/components/file-preview.mjs"
+import "/components/file-actions.mjs"
 import { confirmDialog } from "../../components/dialog.mjs"
 import { alertDialog } from "../../components/dialog.mjs"
 import { toggleInRightbar } from "/pages/rightbar/rightbar.mjs"
@@ -23,17 +25,6 @@ template.innerHTML = `
       padding: 10px;
     }
     #preview-container{margin-top: 20px;}
-    #preview object{
-      width: 100%;
-      height: 600px;
-    }
-    #preview img{
-      width: 100%;
-      background-color: white;
-    }
-    #preview table thead tr{
-      border-bottom: 1px solid gray;
-    }
     .hidden{display: none;}
     #subtitle{color: gray; margin-left: 10px;}
     #maintitle {margin-bottom: 0px;}
@@ -56,13 +47,11 @@ template.innerHTML = `
     </div>
   
     <div id="actions-container" class="hidden">
-    </div>
-
-    <div id="action-component-container" class="hidden">
+      <file-actions-component id="actions"/>
     </div>
 
     <div id="preview-container" class="hidden">
-      <div id="preview"></div>
+      <file-preview-component id="preview"/>
     </div>
   </div>
 `;
@@ -76,12 +65,10 @@ class Element extends HTMLElement {
 
     this.deleteFile = this.deleteFile.bind(this)
     this.downloadFile = this.downloadFile.bind(this)
-    this.actionsClick = this.actionsClick.bind(this)
 
     this.shadowRoot.getElementById("delete-btn").addEventListener("click", this.deleteFile)
     this.shadowRoot.getElementById("download-btn").addEventListener("click", this.downloadFile)
     this.shadowRoot.getElementById("details-btn").addEventListener("click", () => toggleInRightbar("file-info", null, [["hideInfoButton", "true"], ["type", this.file.type], ["fileid", this.file.id]]))
-    this.shadowRoot.getElementById("actions-container").addEventListener("click", this.actionsClick)
 
     this.fileId = /([\da-zA-Z]+)/.exec(state().path.split("/")[2])[0]
   }
@@ -121,132 +108,15 @@ class Element extends HTMLElement {
       this.shadowRoot.getElementById("delete-btn").classList.remove("hidden")
     }
 
-    let actions = getFileActions(file.mime);
-    this.shadowRoot.getElementById("actions-container").classList.toggle("hidden", actions.length == 0)
-    this.shadowRoot.getElementById("action-component-container").classList.toggle("hidden", true);
-    if(actions.length > 0){
-      this.shadowRoot.getElementById("actions-container").innerHTML = actions
-                              .filter(a => !a.access || file.rights.includes(a.access))
-                              .filter(a => !a.permission || permissions.includes(a.permission))
-                              .map(a => `<button class="styled" data-action-id="${a.id}">${a.title}</button>`).join("")
-    }
-
     this.shadowRoot.getElementById("preview-container").classList.toggle("hidden", file.type != "file")
+    this.shadowRoot.getElementById("actions-container").classList.toggle("hidden", file.type != "file")
 
     if(file.type == "file" && (this.fileId != this.lastFileId || this.lastFileDate != fileDate)){
-      this.refreshPreview();
+      this.shadowRoot.getElementById("preview").setAttribute("file-id", this.file.id)
+      this.shadowRoot.getElementById("actions").setAttribute("file-id", this.file.id)
     }
     this.lastFileId = this.fileId
     this.lastFileDate = fileDate
-  }
-
-  async refreshPreview(){
-    let file = this.file
-    this.shadowRoot.getElementById("preview").innerHTML = ""
-      if(file.type == "file"){
-        switch(file.mime){
-          case "image/gif":
-          case "image/jpg":
-          case "image/jpeg":
-          case "image/png":
-          case "image/svg+xml": {
-            let res = await api.fetch(`file/dl/${this.fileId}`)
-            let blob = await res.blob()
-            let objectURL = URL.createObjectURL(blob);
-            let img = document.createElement("img")
-            img.src = objectURL
-            this.shadowRoot.getElementById("preview").appendChild(img)
-            break;
-          }
-
-          case "application/pdf": {
-            let res = await api.fetch(`file/dl/${this.fileId}`)
-            let blob = await res.blob()
-            let objectURL = URL.createObjectURL(blob);
-            this.shadowRoot.getElementById("preview").innerHTML = `
-              <object data="${objectURL}" type="application/pdf">
-                <embed src="${objectURL}" type="application/pdf" />
-              </object>
-            `
-            break;
-          }
-
-          case "application/javascript":
-          case "text/csv":
-          case "application/x-shellscript":
-          case "text/x-log":
-          case "text/markdown":
-          case "application/x-sql":
-          case "text/plain": {
-            let res = await api.fetch(`file/dl/${this.fileId}`)
-            let text = await res.text()
-            let div = document.createElement("pre")
-            div.innerText = text
-            this.shadowRoot.getElementById("preview").appendChild(div)
-            break;
-          }
-
-          case "video/mp4": 
-          case "video/webm": {
-            this.shadowRoot.getElementById("preview").innerHTML = `
-            <video controls>
-              <source src="${this.file.links?.raw}" type="${file.mime}">
-              Your browser does not support the video tag.
-            </video> 
-            `
-            break;
-          }
-
-          case "audio/mpeg": {
-            this.shadowRoot.getElementById("preview").innerHTML = `
-            <audio controls>
-              <source src="${this.file.links?.raw}" type="${file.mime}">
-              Your browser does not support the audio tag.
-            </audio> 
-            `
-            break;
-          }
-
-          case "application/json": {
-            let res = await api.fetch(`file/dl/${this.fileId}`)
-            let text = await res.text()
-            let div = document.createElement("pre")
-            try{
-              div.innerText = JSON.stringify(JSON.parse(text), null, 2)
-            } catch(err){
-              div.innerText = text
-            }
-            this.shadowRoot.getElementById("preview").appendChild(div)
-            break;
-          }
-
-          case "application/zip": {
-            this.shadowRoot.getElementById("preview").innerHTML = "<p>Loading preview...</p>"
-            let res = await api.fetch(`file/dl/${this.fileId}`)
-            let blob = await res.blob()
-            import("https://deno.land/x/zipjs/index.js").then(async zip => {
-              let entries = await (new zip.ZipReader(new zip.BlobReader(blob))).getEntries()
-              this.shadowRoot.getElementById("preview").innerHTML = `
-                <h2>Content</h2>
-                <table>
-                  <thead>
-                    <tr>
-                      <th>File</th><th>Size</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    ${entries.map(e => `<tr><td>${e.filename}</td><td>${sizeToName(e.uncompressedSize)}</td></tr>`).join("")}
-                  </tbody>
-                </table>
-              `
-            })
-            break;
-          }
-
-          default: 
-            this.shadowRoot.getElementById("preview").innerText = "No preview for this file type"
-        }
-      }
   }
   
   async deleteFile(){
@@ -273,31 +143,6 @@ class Element extends HTMLElement {
       await writableStream.write(file);
       await writableStream.close();
     }catch(err){}
-  }
-
-  actionsClick(e){
-    let id = e.target.getAttribute("data-action-id")
-    if(!id) return;
-
-
-    let action = getFileActions(this.file.mime).find(a => a.id == id);
-    if(!action) return;
-
-    if(action.gotoPath){
-      goto(`${action.gotoPath}?file-id=${this.file.id}`)
-    } else {
-      if(!this.shadowRoot.getElementById("action-component-container").classList.contains("hidden")){
-        this.refreshData()
-        this.refreshPreview()
-        return;
-      }
-      let container = this.shadowRoot.getElementById("action-component-container");
-      import(action.componentPath).then(() => {
-        container.innerHTML = `<${action.componentName} file-id="${this.file.id}"></${action.componentName}>`
-        container.classList.toggle("hidden", false)
-      })
-      this.shadowRoot.getElementById("preview-container").classList.toggle("hidden", true)
-    }
   }
 
   connectedCallback() {

@@ -183,6 +183,23 @@ export default (app) => {
     })
   })
 
+  route.post("/:id/content-text", noGuest, function (req, res, next) {
+    if (!validateAccess(req, res, { permission: "file.upload" })) return;
+    let file = File.lookupAccessible(sanitize(req.params.id), res.locals.user, res.locals.shareKey)
+    if (!file) throw "Unknown file";
+    if(typeof req.body.content !== "string") throw "body must contain content";
+    let buffer = Buffer.from(req.body.content||"");
+    let fileSize = buffer.length || 0
+    if(!Setup.userCanStoreSize(res.locals.user, fileSize)) throw `File ${file.name} is too large and would cause you to exceed your allowed quota. Upload aborted.`;
+    file.setBlob(buffer).then(() => {
+      file.size = fileSize
+      file.updateHash().then(() => {
+        res.json({ id: file._id, hash: file.hash, name: file.name })
+      })
+      file.markModified();
+    })
+  })
+
   route.post("/:id/folders", function (req, res, next) {
     if (!validateAccess(req, res, { permission: "file.edit" })) return;
     if (!sanitize(req.body.name)) throw "name is mandatory"
