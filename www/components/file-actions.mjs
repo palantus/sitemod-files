@@ -4,6 +4,7 @@ import {goto} from "/system/core.mjs"
 import api from "/system/api.mjs"
 import {getFileActions} from "/libs/actions.mjs"
 import {userPermissions} from "/system/user.mjs"
+import {alertDialog, showDialog} from "/components/dialog.mjs"
 
 const template = document.createElement('template');
 template.innerHTML = `
@@ -21,6 +22,8 @@ template.innerHTML = `
 
     <div id="action-component-container" class="hidden">
     </div>
+
+    <dialog-component id="action-dialog"></dialog-component>
   </div>
 `;
 
@@ -67,7 +70,7 @@ class Element extends HTMLElement {
 
     if(action.gotoPath){
       goto(`${action.gotoPath}?file-id=${this.file.id}${this.federationId?`&federation-id=${this.federationId}`:''}`)
-    } else {
+    } else if(action.componentName){
       if(!this.shadowRoot.getElementById("action-component-container").classList.contains("hidden")){
         this.refreshData()
         return;
@@ -77,6 +80,17 @@ class Element extends HTMLElement {
         container.innerHTML = `<${action.componentName} file-id="${this.file.id}" federation-id="${this.federationId||''}"></${action.componentName}>`
         container.classList.toggle("hidden", false)
       })
+    } else if(action.dialog){
+      let container = document.createElement("div")
+      container.innerHTML = `<dialog-component></dialog-component>`
+      document.getElementById("body-container").appendChild(container)
+      let dialog = container.querySelector("dialog-component")
+      dialog.innerHTML = action.dialog.html || ""
+      if(!action.dialog.options.data) action.dialog.options.data = {};
+      action.dialog.options.data.file = this.file;
+      showDialog(dialog, action.dialog.options)
+    } else {
+      alertDialog("Invalid action")
     }
   }
   
