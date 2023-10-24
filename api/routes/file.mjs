@@ -14,6 +14,7 @@ import Share from "../../../../models/share.mjs";
 import ACL from "../../../../models/acl.mjs";
 import DataType from "../../../../models/datatype.mjs";
 import Setup from "../../models/setup.mjs";
+import Remote from "../../../../models/remote.mjs"
 
 export default (app) => {
 
@@ -261,6 +262,36 @@ export default (app) => {
     });
     zip.pipe(res)
     zip.finalize()
+  });
+
+  route.get(['/locate/:id/download', '/locate/:id/download/:filename'], async (req, res) => {
+    if (!validateAccess(req, res, { permission: "file.read" })) return;
+    let file = File.lookupAccessible(sanitize(req.params.id), res.locals.user, res.locals.shareKey)
+    if(file){
+      res.setHeader('Content-disposition', contentDisposition(file.getFilenameForContentDisposition()));
+      res.setHeader('Content-Type', file.mime);
+      res.setHeader('Content-Length', file.size);
+      file.blob.pipe(res)
+      return;
+    }
+
+    //Try remotes with files enabled
+    for(let remote of Remote.allWithMod("files")){
+      try{
+        let file = await remote.get(`file/${req.params.id}`, {user: res.locals.user})
+        if(!file) continue;
+        let useGuest = res.locals.user.id == "guest" || !res.locals.user.hasPermission("user.federate")
+        let response = await remote.get(`file/dl/${file.id}`, {user: res.locals.user, returnRaw: true, ignoreErrors: true, useGuest})
+        let headers = {}
+        if(response.headers?.get("Content-Disposition")) headers["Content-Disposition"] = response.headers.get("Content-Disposition");
+        if(response.headers?.get("Content-Type")) headers["Content-Type"] = response.headers.get("Content-Type");
+        if(response.headers?.get("Content-Length")) headers["Content-Length"] = response.headers.get("Content-Length");
+        res.writeHead(response.status, headers)
+        response.body.pipe(res)
+        return;
+      } catch(err){}
+    }
+    return res.sendStatus(404);
   });
 
   route.delete('/query', function (req, res, next) {
