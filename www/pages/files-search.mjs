@@ -9,7 +9,7 @@ import "../components/field.mjs"
 import "../components/field-edit.mjs"
 import {on, off, fire} from "../system/events.mjs"
 import {state, pushStateQuery, apiURL} from "../system/core.mjs"
-import { confirmDialog } from "../../components/dialog.mjs"
+import { confirmDialog } from "../components/dialog.mjs"
 import "../components/data/searchhelp.mjs"
 import {sizeToName} from "./file.mjs"
 

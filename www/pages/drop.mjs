@@ -9,7 +9,7 @@ import "../components/action-bar.mjs"
 import "../components/action-bar-item.mjs"
 import "../components/acl.mjs"
 import "../components/progress.mjs"
-import { confirmDialog } from "../../components/dialog.mjs"
+import { confirmDialog } from "../components/dialog.mjs"
 
 const template = document.createElement('template');
 template.innerHTML = `

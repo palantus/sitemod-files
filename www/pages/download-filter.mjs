@@ -3,7 +3,7 @@ const elementName = 'file-download-filter-page'
 import {state, setPageTitle, apiURL} from "../system/core.mjs"
 import api from "../system/api.mjs"
 import "../components/field-ref.mjs"
-import { alertDialog } from "../../components/dialog.mjs"
+import { alertDialog } from "../components/dialog.mjs"
 import {sizeToName} from "./file.mjs"
 import Toast from "../components/toast.mjs"
 
