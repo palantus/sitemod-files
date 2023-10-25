@@ -1,14 +1,14 @@
 const elementName = 'drop-page'
 
-import {siteURL} from "/system/core.mjs"
-import api from "/system/api.mjs"
-import "/components/field-edit.mjs"
-import "/components/field-ref.mjs"
-import "/components/field-list.mjs"
-import "/components/action-bar.mjs"
-import "/components/action-bar-item.mjs"
-import "/components/acl.mjs"
-import "/components/progress.mjs"
+import {siteURL} from "../system/core.mjs"
+import api from "../system/api.mjs"
+import "../components/field-edit.mjs"
+import "../components/field-ref.mjs"
+import "../components/field-list.mjs"
+import "../components/action-bar.mjs"
+import "../components/action-bar-item.mjs"
+import "../components/acl.mjs"
+import "../components/progress.mjs"
 import { confirmDialog } from "../../components/dialog.mjs"
 
 const template = document.createElement('template');

@@ -1,6 +1,6 @@
 const elementName = 'file-preview-component'
 
-import api from "/system/api.mjs"
+import api from "../system/api.mjs"
 import {sizeToName} from "../pages/file.mjs"
 
 const template = document.createElement('template');

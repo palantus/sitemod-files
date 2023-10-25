@@ -1,11 +1,11 @@
 const elementName = 'rightbar-file-info-component'
 
-import api from "/system/api.mjs"
-import "/components/field-edit.mjs"
-import {on, off} from "/system/events.mjs"
-import { closeRightbar } from "/pages/rightbar/rightbar.mjs"
-import {goto} from "/system/core.mjs"
-import "/components/acl.mjs"
+import api from "../../system/api.mjs"
+import "../../components/field-edit.mjs"
+import {on, off} from "../../system/events.mjs"
+import { closeRightbar } from "../../pages/rightbar/rightbar.mjs"
+import {goto} from "../../system/core.mjs"
+import "../../components/acl.mjs"
 
 const template = document.createElement('template');
 template.innerHTML = `

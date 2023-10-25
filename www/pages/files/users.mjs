@@ -1,9 +1,9 @@
 const elementName = 'files-usage-page'
 
-import api from "/system/api.mjs"
-import "/components/field-edit.mjs"
-import "/components/field-list.mjs"
-import {on, off} from "/system/events.mjs"
+import api from "../../system/api.mjs"
+import "../../components/field-edit.mjs"
+import "../../components/field-list.mjs"
+import {on, off} from "../../system/events.mjs"
 import { sizeToNameMB } from "../file.mjs"
 
 const template = document.createElement('template');

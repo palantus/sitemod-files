@@ -1,19 +1,19 @@
 const elementName = 'file-page'
 
-import {state, setPageTitle, goto} from "/system/core.mjs"
-import api from "/system/api.mjs"
-import {userPermissions} from "/system/user.mjs"
-import "/components/field-edit.mjs"
-import "/components/field-ref.mjs"
-import "/components/field-list.mjs"
-import "/components/action-bar.mjs"
-import "/components/action-bar-item.mjs"
-import "/components/file-preview.mjs"
-import "/components/file-actions.mjs"
+import {state, setPageTitle, goto} from "../system/core.mjs"
+import api from "../system/api.mjs"
+import {userPermissions} from "../system/user.mjs"
+import "../components/field-edit.mjs"
+import "../components/field-ref.mjs"
+import "../components/field-list.mjs"
+import "../components/action-bar.mjs"
+import "../components/action-bar-item.mjs"
+import "../components/file-preview.mjs"
+import "../components/file-actions.mjs"
 import { confirmDialog } from "../../components/dialog.mjs"
 import { alertDialog } from "../../components/dialog.mjs"
-import { toggleInRightbar } from "/pages/rightbar/rightbar.mjs"
-import {getFileActions} from "/libs/actions.mjs"
+import { toggleInRightbar } from "../pages/rightbar/rightbar.mjs"
+import {getFileActions} from "../libs/actions.mjs"
 
 const template = document.createElement('template');
 template.innerHTML = `

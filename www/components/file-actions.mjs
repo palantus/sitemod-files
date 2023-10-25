@@ -1,10 +1,10 @@
 const elementName = 'file-actions-component'
 
-import {goto} from "/system/core.mjs"
-import api from "/system/api.mjs"
-import {getFileActions} from "/libs/actions.mjs"
-import {userPermissions} from "/system/user.mjs"
-import {alertDialog, showDialog} from "/components/dialog.mjs"
+import {goto} from "../system/core.mjs"
+import api from "../system/api.mjs"
+import {getFileActions} from "../libs/actions.mjs"
+import {userPermissions} from "../system/user.mjs"
+import {alertDialog, showDialog} from "../components/dialog.mjs"
 
 const template = document.createElement('template');
 template.innerHTML = `

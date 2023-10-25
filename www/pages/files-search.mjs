@@ -1,16 +1,16 @@
 const elementName = 'files-search-page'
 
-import api from "/system/api.mjs"
-import {userPermissions} from "/system/user.mjs"
-import "/components/action-bar.mjs"
-import "/components/action-bar-item.mjs"
-import "/components/field-ref.mjs"
-import "/components/field.mjs"
-import "/components/field-edit.mjs"
-import {on, off, fire} from "/system/events.mjs"
-import {state, pushStateQuery, apiURL} from "/system/core.mjs"
+import api from "../system/api.mjs"
+import {userPermissions} from "../system/user.mjs"
+import "../components/action-bar.mjs"
+import "../components/action-bar-item.mjs"
+import "../components/field-ref.mjs"
+import "../components/field.mjs"
+import "../components/field-edit.mjs"
+import {on, off, fire} from "../system/events.mjs"
+import {state, pushStateQuery, apiURL} from "../system/core.mjs"
 import { confirmDialog } from "../../components/dialog.mjs"
-import "/components/data/searchhelp.mjs"
+import "../components/data/searchhelp.mjs"
 import {sizeToName} from "./file.mjs"
 
 const template = document.createElement('template');

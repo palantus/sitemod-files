@@ -1,8 +1,8 @@
 let elementName = "file-edit-text-component"
 
-import api from "/system/api.mjs"
-import "/components/richtext.mjs"
-import Toast from "/components/toast.mjs"
+import api from "../system/api.mjs"
+import "../components/richtext.mjs"
+import Toast from "../components/toast.mjs"
 
 const template = document.createElement('template');
 template.innerHTML = `

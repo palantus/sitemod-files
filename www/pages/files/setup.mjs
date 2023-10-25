@@ -1,11 +1,11 @@
 const elementName = 'files-setup-page'
 
-import api from "/system/api.mjs"
-import "/components/field-edit.mjs"
-import "/components/field-list.mjs"
-import "/components/collapsible-card.mjs"
-import {on, off} from "/system/events.mjs"
-import {goto} from "/system/core.mjs"
+import api from "../../system/api.mjs"
+import "../../components/field-edit.mjs"
+import "../../components/field-list.mjs"
+import "../../components/collapsible-card.mjs"
+import {on, off} from "../../system/events.mjs"
+import {goto} from "../../system/core.mjs"
 
 const template = document.createElement('template');
 template.innerHTML = `
