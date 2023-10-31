@@ -9,7 +9,7 @@ import "../../components/acl.mjs"
 
 const template = document.createElement('template');
 template.innerHTML = `
-  <link rel='stylesheet' href='../css/global.css'>
+  <link rel='stylesheet' href='/css/global.css'>
   <style>
     #container{color: white; padding: 10px;}
     h2{margin: 0px; border-bottom: 1px solid lightgray; padding-bottom: 5px; margin-bottom: 10px;}
