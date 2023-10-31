@@ -1,6 +1,6 @@
 const elementName = 'file-actions-component'
 
-import {goto} from "../system/core.mjs"
+import {goto, stylesheets} from "../system/core.mjs"
 import api from "../system/api.mjs"
 import {getFileActions} from "../libs/actions.mjs"
 import {userPermissions} from "../system/user.mjs"
@@ -9,7 +9,6 @@ import {alertDialog, showDialog} from "../components/dialog.mjs"
 const template = document.createElement('template');
 template.innerHTML = `
 
-  <link rel='stylesheet' href='/css/global.css'>
   <style>
     .hidden{display: none;}
     #actions-container{margin-top: 10px;}
@@ -31,7 +30,8 @@ class Element extends HTMLElement {
   constructor() {
     super();
 
-    this.attachShadow({ mode: 'open' });
+    this.attachShadow({ mode: 'open' })
+        .adoptedStyleSheets = [stylesheets.global];
     this.shadowRoot.appendChild(template.content.cloneNode(true));
 
     this.actionsClick = this.actionsClick.bind(this)

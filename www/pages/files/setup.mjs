@@ -5,12 +5,10 @@ import "../../components/field-edit.mjs"
 import "../../components/field-list.mjs"
 import "../../components/collapsible-card.mjs"
 import {on, off} from "../../system/events.mjs"
-import {goto} from "../../system/core.mjs"
+import {goto, stylesheets} from "../../system/core.mjs"
 
 const template = document.createElement('template');
 template.innerHTML = `
-  <link rel='stylesheet' href='/css/global.css'>
-  <link rel='stylesheet' href='/css/searchresults.css'>
   <style>
     #container{
         padding: 10px;
@@ -66,7 +64,8 @@ class Element extends HTMLElement {
   constructor() {
     super();
 
-    this.attachShadow({ mode: 'open' });
+    this.attachShadow({ mode: 'open' })
+        .adoptedStyleSheets = [stylesheets.global, stylesheets.searchresults];
     this.shadowRoot.appendChild(template.content.cloneNode(true));
 
     this.refreshData = this.refreshData.bind(this);

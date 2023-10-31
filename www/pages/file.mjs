@@ -1,6 +1,6 @@
 const elementName = 'file-page'
 
-import {state, setPageTitle, goto} from "../system/core.mjs"
+import {state, setPageTitle, stylesheets} from "../system/core.mjs"
 import api from "../system/api.mjs"
 import {userPermissions} from "../system/user.mjs"
 import "../components/field-edit.mjs"
@@ -17,8 +17,6 @@ import { toggleInRightbar } from "../pages/rightbar/rightbar.mjs"
 const template = document.createElement('template');
 template.innerHTML = `
 
-  <link rel='stylesheet' href='/css/global.css'>
-  <link rel='stylesheet' href='/css/searchresults.css'>
   <style>
     #container{
       padding: 10px;
@@ -59,7 +57,8 @@ class Element extends HTMLElement {
   constructor() {
     super();
 
-    this.attachShadow({ mode: 'open' });
+    this.attachShadow({ mode: 'open' })
+        .adoptedStyleSheets = [stylesheets.global, stylesheets.searchresults];
     this.shadowRoot.appendChild(template.content.cloneNode(true));
 
     this.deleteFile = this.deleteFile.bind(this)

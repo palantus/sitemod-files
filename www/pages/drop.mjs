@@ -1,6 +1,6 @@
 const elementName = 'drop-page'
 
-import {siteURL} from "../system/core.mjs"
+import {siteURL, stylesheets} from "../system/core.mjs"
 import api from "../system/api.mjs"
 import "../components/field-edit.mjs"
 import "../components/field-ref.mjs"
@@ -14,7 +14,6 @@ import { confirmDialog } from "../components/dialog.mjs"
 const template = document.createElement('template');
 template.innerHTML = `
 
-  <link rel='stylesheet' href='/css/global.css'>
   <style>
     #container{
       padding: 10px;
@@ -108,7 +107,8 @@ class Element extends HTMLElement {
   constructor() {
     super();
 
-    this.attachShadow({ mode: 'open' });
+    this.attachShadow({ mode: 'open' })
+        .adoptedStyleSheets = [stylesheets.global];
     this.shadowRoot.appendChild(template.content.cloneNode(true));
 
     this.pasteHandler = this.pasteHandler.bind(this)

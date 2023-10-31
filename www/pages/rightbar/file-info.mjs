@@ -4,12 +4,11 @@ import api from "../../system/api.mjs"
 import "../../components/field-edit.mjs"
 import {on, off} from "../../system/events.mjs"
 import { closeRightbar } from "../../pages/rightbar/rightbar.mjs"
-import {goto} from "../../system/core.mjs"
+import {goto, stylesheets} from "../../system/core.mjs"
 import "../../components/acl.mjs"
 
 const template = document.createElement('template');
 template.innerHTML = `
-  <link rel='stylesheet' href='/css/global.css'>
   <style>
     #container{color: white; padding: 10px;}
     h2{margin: 0px; border-bottom: 1px solid lightgray; padding-bottom: 5px; margin-bottom: 10px;}
@@ -51,7 +50,8 @@ class Element extends HTMLElement {
   constructor() {
     super();
 
-    this.attachShadow({ mode: 'open' });
+    this.attachShadow({ mode: 'open' })
+        .adoptedStyleSheets = [stylesheets.global];
     this.shadowRoot.appendChild(template.content.cloneNode(true));
 
     this.refreshData = this.refreshData.bind(this)

@@ -1,6 +1,6 @@
 const elementName = 'file-download-id-page'
 
-import {state, setPageTitle, apiURL} from "../system/core.mjs"
+import {state, setPageTitle, apiURL, stylesheets} from "../system/core.mjs"
 import api from "../system/api.mjs"
 import "../components/field-ref.mjs"
 import { alertDialog } from "../components/dialog.mjs"
@@ -10,8 +10,6 @@ import Toast from "../components/toast.mjs"
 const template = document.createElement('template');
 template.innerHTML = `
 
-  <link rel='stylesheet' href='/css/global.css'>
-  <link rel='stylesheet' href='/css/searchresults.css'>
   <style>
     #container{
       padding: 10px;
@@ -36,7 +34,8 @@ class Element extends HTMLElement {
   constructor() {
     super();
 
-    this.attachShadow({ mode: 'open' });
+    this.attachShadow({ mode: 'open' })
+        .adoptedStyleSheets = [stylesheets.global, stylesheets.searchresults];
     this.shadowRoot.appendChild(template.content.cloneNode(true));
 
     this.downloadFile = this.downloadFile.bind(this)

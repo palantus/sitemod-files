@@ -2,11 +2,11 @@ const elementName = 'file-preview-component'
 
 import api from "../system/api.mjs"
 import {sizeToName} from "../pages/file.mjs"
+import { stylesheets } from "../system/core.mjs"
 
 const template = document.createElement('template');
 template.innerHTML = `
 
-  <link rel='stylesheet' href='/css/global.css'>
   <style>
     #preview object{
       width: 100%;
@@ -41,7 +41,8 @@ class Element extends HTMLElement {
   constructor() {
     super();
 
-    this.attachShadow({ mode: 'open' });
+    this.attachShadow({ mode: 'open' })
+        .adoptedStyleSheets = [stylesheets.global];
     this.shadowRoot.appendChild(template.content.cloneNode(true));
 
     this.fileId = this.getAttribute("file-id")
