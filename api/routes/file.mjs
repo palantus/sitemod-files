@@ -323,8 +323,8 @@ export default (app) => {
       file.updateMimeTypes()
     }
 
-    if (req.body.expire !== undefined && file instanceof File)
-      file.setExpiration(req.body.expire);
+    if (req.body.expirationDate !== undefined && file instanceof File)
+      file.setExpiration(req.body.expirationDate);
 
     let tagList = !req.body.tags ? null : Array.isArray(req.body.tags) ? req.body.tags : typeof req.body.tags === "string" ? req.body.tags.split(",").map(t => t.trim()) : null;
     if (tagList) {
