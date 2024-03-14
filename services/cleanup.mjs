@@ -6,7 +6,7 @@ export function startCleanupService() {
 }
 
 function runJob() {
-  console.time("Files Cleanup starting...")
+  console.time("Files Cleanup completed")
 
   let todayStrISO = new Date().toISOString()
 
