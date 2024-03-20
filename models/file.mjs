@@ -34,7 +34,7 @@ export default class File extends Entity {
     ACL.setDefaultACLOnEntity(this, owner.id == "guest" && folder ? folder.related.owner : owner, DataType.lookup("file"))
   }
 
-  markModified(){
+  markModified() {
     this.modified = getTimestamp()
   }
 
@@ -61,16 +61,21 @@ export default class File extends Entity {
     return null;
   }
 
+  static isOfType(entity) {
+    if (!entity) return false;
+    return entity.tags.includes("file") && !entity.tags.includes("folder")
+  }
+
   updateMime(suggestion) {
     let filename = this.name
     let newMimeType = mime.lookup(filename)
-    if(newMimeType)
+    if (newMimeType)
       this.mime = newMimeType
-    else if(filename?.endsWith(".ps1"))
+    else if (filename?.endsWith(".ps1"))
       this.mime = "text/plain"
-    else if(filename?.endsWith(".ld2"))
+    else if (filename?.endsWith(".ld2"))
       this.mime = "application/ld2"
-    else if(suggestion)
+    else if (suggestion)
       this.mime = suggestion
     else
       this.mime = 'application/octet-stream'
@@ -78,11 +83,11 @@ export default class File extends Entity {
     this.updateMimeTypes()
   }
 
-  updateMimeTypes(){
-    if(!this.mime) this.updateMime()
+  updateMimeTypes() {
+    if (!this.mime) this.updateMime()
     let mimeSplit = this.mime.split("/")
-    this.mimeType = mimeSplit[0]||null
-    this.mimeSubType = mimeSplit[1]||null
+    this.mimeType = mimeSplit[0] || null
+    this.mimeSubType = mimeSplit[1] || null
   }
 
   setExpiration(expire) {
@@ -145,27 +150,27 @@ export default class File extends Entity {
     return query.type(File).tag("file").relatedTo(user, "owner").all
   }
 
-  get owner(){
+  get owner() {
     return User.from(this.related.owner)
   }
 
-  get userTags(){
+  get userTags() {
     return this.tags.filter(t => t.startsWith("user-")).map(t => t.substr(5))
   }
 
-  getLinks(user, shareKey){
+  getLinks(user, shareKey) {
     return {
       download: `${global.sitecore.apiURL}/file/dl/${this._id}${this.name ? `/${encodeURI(this.name)}` : ''}?${shareKey ? `shareKey=${shareKey}` : `token=${userService.getTempAuthToken(user)}`}`,
       raw: `${global.sitecore.apiURL}/file/raw/${this._id}${this.name ? `/${encodeURI(this.name)}` : ''}?token=${userService.getTempAuthToken(user)}`,
     }
   }
-  
-  delete(){
+
+  delete() {
     this.rels.share?.forEach(s => Share.from(s).delete())
     super.delete()
   }
 
-  getFilenameForContentDisposition(){
+  getFilenameForContentDisposition() {
     return Setup.lookup().onlyASCIIHeaders ? encodeURIComponent(this.name) : this.name
   }
 
