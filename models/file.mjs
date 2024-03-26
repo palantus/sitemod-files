@@ -48,6 +48,11 @@ export default class File extends Entity {
     return query.type(File).tag("file").prop("hash", hash).not(query.tag("folder")).first
   }
 
+  static lookupNameAll(name) {
+    if (!name) return [];
+    return query.type(File).tag("file").prop("name", name).not(query.tag("folder")).all
+  }
+
   static lookupAccessible(idOrHash, user, shareKey) {
     if (!idOrHash) return null;
     let file = !isNaN(idOrHash) ? File.lookup(idOrHash) : null
