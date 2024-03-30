@@ -333,6 +333,10 @@ export default (app) => {
         file.removeTag(t)
       file.tag(tagList)
     }
+
+    if (typeof req.body.options?.sortByDate === "boolean") {
+      file.options.sortByDate = req.body.options.sortByDate
+    }
     res.json(true)
   })
 

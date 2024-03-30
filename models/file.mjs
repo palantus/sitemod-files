@@ -105,6 +105,15 @@ export default class File extends Entity {
     }
   }
 
+  get options() {
+    let options = this.related.options
+    if (!options) {
+      options = new Entity().tag("fileoptions")
+      this.rel(options, "options")
+    }
+    return options
+  }
+
   get parentPath() {
     let parent = this.related.parent
     if (!parent) return null;

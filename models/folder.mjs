@@ -121,6 +121,15 @@ class Folder extends Entity {
     super.delete()
   }
 
+  get options() {
+    let options = this.related.options
+    if (!options) {
+      options = new Entity().tag("folderoptions")
+      this.rel(options, "options")
+    }
+    return options
+  }
+
   static root() {
     return query.type(Folder).tag("root").tag("folder").first
       || new Folder("", User.lookupAdmin())

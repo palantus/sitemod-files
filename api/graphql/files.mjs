@@ -3,16 +3,14 @@ import {
   GraphQLString,
   GraphQLInt,
   GraphQLList,
-  GraphQLFloat,
   GraphQLNonNull,
-  GraphQLInputObjectType,
   GraphQLBoolean,
   GraphQLUnionType
 } from 'graphql'
 import { ifPermission, ifPermissionThrow } from "../../../../services/auth.mjs"
 import File from '../../models/file.mjs'
 import Folder from '../../models/folder.mjs'
-import {UserType} from '../../../../api/graphql/user.mjs'
+import { UserType } from '../../../../api/graphql/user.mjs'
 import FileOrFolder from '../../models/fileorfolder.mjs'
 
 /*
@@ -48,21 +46,21 @@ export const FileType = new GraphQLObjectType({
   description: 'This represents a file',
   fields: () => ({
     id: { type: GraphQLNonNull(GraphQLInt), resolve: file => file._id },
-    name: {type: GraphQLNonNull(GraphQLString)},
-    type: {type: GraphQLNonNull(GraphQLString), resolve: () => "file"},
-    parentPath: {type: GraphQLString},
-    rights: {type: GraphQLNonNull(GraphQLString), resolve: (file, args, context) => file.rights(context.user, context.shareKey)},
-    created: {type: GraphQLString, resolve: f => f.timestamp || null},
-    modified: {type: GraphQLString},
-    expirationDate: {type: GraphQLString, resolve: f => f.expire || null},
-    mime: {type: GraphQLString},
-    mimeType: {type: GraphQLString},
-    mimeSubType: {type: GraphQLString},
-    hash: {type: GraphQLString},
-    size: {type: GraphQLInt},
-    owner: {type: UserType},
-    tags: {type: GraphQLList(GraphQLString), resolve: f => f.userTags},
-    links: {type: GraphQLNonNull(FileLinkType), resolve: (f, args, context) => f.getLinks(context.user, context.shareKey)}
+    name: { type: GraphQLNonNull(GraphQLString) },
+    type: { type: GraphQLNonNull(GraphQLString), resolve: () => "file" },
+    parentPath: { type: GraphQLString },
+    rights: { type: GraphQLNonNull(GraphQLString), resolve: (file, args, context) => file.rights(context.user, context.shareKey) },
+    created: { type: GraphQLString, resolve: f => f.timestamp || null },
+    modified: { type: GraphQLString },
+    expirationDate: { type: GraphQLString, resolve: f => f.expire || null },
+    mime: { type: GraphQLString },
+    mimeType: { type: GraphQLString },
+    mimeSubType: { type: GraphQLString },
+    hash: { type: GraphQLString },
+    size: { type: GraphQLInt },
+    owner: { type: UserType },
+    tags: { type: GraphQLList(GraphQLString), resolve: f => f.userTags },
+    links: { type: GraphQLNonNull(FileLinkType), resolve: (f, args, context) => f.getLinks(context.user, context.shareKey) }
   })
 })
 
@@ -71,15 +69,24 @@ export const FolderType = new GraphQLObjectType({
   description: 'This represents a folder',
   fields: () => ({
     id: { type: GraphQLNonNull(GraphQLInt), resolve: file => file._id },
-    name: {type: GraphQLNonNull(GraphQLString)},
-    type: {type: GraphQLNonNull(GraphQLString), resolve: () => "folder"},
-    content: {type: GraphQLNonNull(GraphQLList(FileOrFolderType)), resolve: (folder, args, context) => folder.accessibleContent(context.user, context.shareKey)},
-    parentPath: {type: GraphQLString},
-    rights: {type: GraphQLNonNull(GraphQLString), resolve: (file, args, context) => file.rights(context.user, context.shareKey)},
-    isSymbolic: {type: GraphQLNonNull(GraphQLBoolean), resolve: folder => folder.isSymbolicLink()},
-    created: {type: GraphQLString, resolve: f => f.timestamp || null},
-    owner: {type: UserType},
-    tags: {type: GraphQLList(GraphQLString), resolve: f => f.userTags},
+    name: { type: GraphQLNonNull(GraphQLString) },
+    type: { type: GraphQLNonNull(GraphQLString), resolve: () => "folder" },
+    content: { type: GraphQLNonNull(GraphQLList(FileOrFolderType)), resolve: (folder, args, context) => folder.accessibleContent(context.user, context.shareKey) },
+    parentPath: { type: GraphQLString },
+    rights: { type: GraphQLNonNull(GraphQLString), resolve: (file, args, context) => file.rights(context.user, context.shareKey) },
+    isSymbolic: { type: GraphQLNonNull(GraphQLBoolean), resolve: folder => folder.isSymbolicLink() },
+    created: { type: GraphQLString, resolve: f => f.timestamp || null },
+    owner: { type: UserType },
+    tags: { type: GraphQLList(GraphQLString), resolve: f => f.userTags },
+    options: { type: GraphQLNonNull(FolderOptionsType) },
+  })
+})
+
+export const FolderOptionsType = new GraphQLObjectType({
+  name: 'FolderOptionsType',
+  description: 'This represents a folder',
+  fields: () => ({
+    sortByDate: { type: GraphQLBoolean, resolve: options => options.sortByDate || false },
   })
 })
 
@@ -93,8 +100,8 @@ export const FileLinkType = new GraphQLObjectType({
   name: 'FileLinkType',
   description: 'This represents a link',
   fields: () => ({
-    download: {type: GraphQLNonNull(GraphQLString)},
-    raw: {type: GraphQLNonNull(GraphQLString)},
+    download: { type: GraphQLNonNull(GraphQLString) },
+    raw: { type: GraphQLNonNull(GraphQLString) },
   })
 })
 
@@ -109,8 +116,8 @@ export default {
       resolve: (parent, args, context) => {
         ifPermissionThrow(context, "file.read", null)
         let file = File.lookup(args.id)
-        if(!file) return null;
-        if(!file.hasAccess(context.user, 'r', context.shareKey)) throw "You do not have access to this file"
+        if (!file) return null;
+        if (!file.hasAccess(context.user, 'r', context.shareKey)) throw "You do not have access to this file"
         return file
       }
     }
@@ -118,15 +125,15 @@ export default {
       type: FolderType,
       args: {
         id: { type: GraphQLInt },
-        path: {type: GraphQLString}
+        path: { type: GraphQLString }
       },
       description: "Get a specific folder",
       resolve: (parent, args, context) => {
         ifPermissionThrow(context, "file.read", null)
-        if(args.path) Folder.userRoot(context.user) //Will create user root if missing
+        if (args.path) Folder.userRoot(context.user) //Will create user root if missing
         let folder = args.id ? Folder.lookup(args.id) : args.path ? Folder.lookupByPath(args.path) : null;
-        if(!folder) return null;
-        if(!folder.hasAccess(context.user, 'r', context.shareKey)) throw "You do not have access to this folder"
+        if (!folder) return null;
+        if (!folder.hasAccess(context.user, 'r', context.shareKey)) throw "You do not have access to this folder"
         return folder
       }
     }
@@ -140,8 +147,8 @@ export default {
       resolve: (parent, args, context) => {
         ifPermissionThrow(context, "file.read", null)
         let ff = FileOrFolder.lookup(args.id);
-        if(!ff) return null;
-        if(!ff.hasAccess(context.user, 'r', context.shareKey)) throw "You do not have access to this file or folder"
+        if (!ff) return null;
+        if (!ff.hasAccess(context.user, 'r', context.shareKey)) throw "You do not have access to this file or folder"
         return ff.toType()
       }
     }
