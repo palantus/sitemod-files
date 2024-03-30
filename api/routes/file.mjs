@@ -334,8 +334,11 @@ export default (app) => {
       file.tag(tagList)
     }
 
-    if (typeof req.body.options?.sortByDate === "boolean") {
-      file.options.sortByDate = req.body.options.sortByDate
+    if (typeof req.body.options?.orderBy === "string") {
+      file.options.orderBy = req.body.options.orderBy
+    }
+    if (typeof req.body.options?.orderDirection === "string") {
+      file.options.orderDirection = req.body.options.orderDirection
     }
     res.json(true)
   })

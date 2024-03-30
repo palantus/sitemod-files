@@ -70,7 +70,16 @@ template.innerHTML = `
           <button class="styled" id="download-folder" title="Only downloads the files that are currently shown. It does not allow download of folders.">Download all files</button><br>
           <button class="styled" id="delete-all-btn" class="hidden">Delete all</button><br>
           <button class="styled" id="copy-webdav-btn" class="hidden">Copy webdav link</button><br>
-          <input type="checkbox" id="sort-by-date">Sort by date</input>
+          <p>Order by:</p>
+          <select id="order-by">
+            <option value="name">Name</option>
+            <option value="date">Date</option>
+            <option value="size">Size</option>
+          </select>
+          <select id="order-direction">
+            <option value="asc">Ascending</option>
+            <option value="desc">Descending</option>
+          </select>
         </action-bar-menu>
       </action-bar-item>
 
@@ -127,10 +136,24 @@ class Element extends HTMLElement {
     this.shadowRoot.getElementById("copy-webdav-btn").addEventListener("click", () => {
       navigator.clipboard.writeText(`${siteURL()}/webdav/files${this.folderPath}`)
     })
-    this.shadowRoot.getElementById("sort-by-date").addEventListener("change", async () => {
-      let val = this.shadowRoot.getElementById("sort-by-date").checked
-      if (this.folder.options.sortByDate == val) return;
-      await api.patch(`file/${this.folder.id}`, { options: { sortByDate: this.shadowRoot.getElementById("sort-by-date").checked } })
+    this.shadowRoot.getElementById("order-by").addEventListener("change", async () => {
+      let val = this.shadowRoot.getElementById("order-by").value
+      if (this.folder.options.orderBy == val) return;
+      await api.patch(`file/${this.folder.id}`, {
+        options: {
+          orderBy: this.shadowRoot.getElementById("order-by").value,
+        }
+      });
+      this.refreshData()
+    })
+    this.shadowRoot.getElementById("order-direction").addEventListener("change", async () => {
+      let val = this.shadowRoot.getElementById("order-direction").value
+      if (this.folder.options.orderDirection == val) return;
+      await api.patch(`file/${this.folder.id}`, {
+        options: {
+          orderDirection: this.shadowRoot.getElementById("order-direction").value,
+        }
+      });
       this.refreshData()
     })
     this.shadowRoot.querySelector('table tbody').addEventListener("click", this.tabClick)
@@ -154,10 +177,10 @@ class Element extends HTMLElement {
     */
     this.folder = (await api.query(`{
         folder(${this.folderId ? `id: ${this.folderId}` : `path: "${this.folderPath}"`}){
-          id, name, parentPath, owner{id}, rights, options {sortByDate},
+          id, name, parentPath, owner{id}, rights, options {orderBy, orderDirection},
           content{
             ...on FileType{
-              id, name, type, created, modified, tags
+              id, name, type, created, modified, tags, size
             },
             ...on FolderType{
               id, name, type, ${this.folderId ? '' : `parentPath, `}created, tags
@@ -171,19 +194,27 @@ class Element extends HTMLElement {
         : !this.folder.parentPath && !this.folder.name ? "Root"
           : this.folder.name
     setPageTitle(!this.folder.parentPath ? "Files" : this.folder.name)
-    this.shadowRoot.getElementById("sort-by-date").checked = this.folder.options.sortByDate
+    this.shadowRoot.getElementById("order-by").value = this.folder.options.orderBy
+    this.shadowRoot.getElementById("order-direction").value = this.folder.options.orderDirection
     this.shadowRoot.querySelector('table tbody').innerHTML = this.folder.content.sort((a, b) => {
-      if (this.folder.options.sortByDate) {
-        let aDate = a.modified || a.created
-        let bDate = b.modified || b.created
-        if (!aDate) return 1
-        if (!bDate) return -1
-        if (aDate < bDate) return 1
-        if (aDate > bDate) return -1
+      let dirFactor = this.folder.options.orderDirection == "asc" ? 1 : -1
+      switch (this.folder.options.orderBy) {
+        case "size":
+          if (a.size == undefined) return -1 * dirFactor;
+          if (b.size == undefined) return 1 * dirFactor;
+          return (a.size == b.size ? 0 : a.size > b.size ? 1 : -1) * dirFactor;
+        case "date":
+          let aDate = a.modified || a.created
+          let bDate = b.modified || b.created
+          if (!aDate) return -1 * dirFactor;
+          if (!bDate) return 1 * dirFactor;
+          if (aDate < bDate) return -1 * dirFactor;
+          if (aDate > bDate) return 1 * dirFactor;
+          return 0;
+        case "name":
+        default:
+          return (a.type == b.type ? (a.name?.toLowerCase() < b.name?.toLowerCase() ? -1 : 1) : a.type == "folder" ? -1 : 1) * dirFactor;
       }
-
-      return a.type == b.type ? (a.name?.toLowerCase() < b.name?.toLowerCase() ? -1 : 1)
-        : a.type == "folder" ? -1 : 1
     }).map(f => `
         <tr class="result ${f.type}" data-id="${f.id}" data-name="${f.name}">
           <td><img class="${f.type} icon" src="/img/${f.type == "folder" ? (f.isSymbolic ? "folder-link.png" : "folder.png") : "file-white.png"}"></td>

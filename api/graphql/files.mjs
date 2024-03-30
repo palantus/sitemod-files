@@ -86,7 +86,8 @@ export const FolderOptionsType = new GraphQLObjectType({
   name: 'FolderOptionsType',
   description: 'This represents a folder',
   fields: () => ({
-    sortByDate: { type: GraphQLBoolean, resolve: options => options.sortByDate || false },
+    orderBy: { type: GraphQLString, resolve: options => options.orderBy || "name" },
+    orderDirection: { type: GraphQLString, resolve: options => options.orderDirection || "asc" },
   })
 })
 
