@@ -73,7 +73,6 @@ class Element extends HTMLElement {
   async refreshPreview(){
     let file = this.file
     let downloadUrl = this.federationId ? `federation/${this.federationId}/api/file/dl/${this.fileId}` : `file/dl/${this.fileId}`
-    // let rawUrl = this.federationId ? `federation/${this.federationId}/api/file/raw/${this.fileId}` : `file/dl/${this.fileId}`
     let rawUrl = `${apiURL()}/file/raw/${file.id}${file.name ? `/${encodeURI(file.name.replace("#", ""))}` : ''}?shareKey=${file.shareKey}`;
 
     this.shadowRoot.getElementById("preview").innerHTML = ""
