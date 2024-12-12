@@ -1,6 +1,6 @@
 const elementName = 'drop-page'
 
-import {siteURL, stylesheets} from "../system/core.mjs"
+import {siteURL, stylesheets, apiURL} from "../system/core.mjs"
 import api from "../system/api.mjs"
 import "../components/field-edit.mjs"
 import "../components/field-ref.mjs"
@@ -133,6 +133,9 @@ class Element extends HTMLElement {
 
   async refreshData(){
     let files = await api.get("file/drop")
+    for(let f of files){
+      f.dropLink = `${apiURL()}/file/raw/${f.id}${f.name ? `/${encodeURI(f.name.replace("#", ""))}` : ''}?shareKey=${f.shareKey}`;
+    }
     this.shadowRoot.getElementById("uploadedfiles").innerHTML = files.reverse()
                                                                      .map(f => `
       <tr>

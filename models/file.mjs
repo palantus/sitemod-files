@@ -203,7 +203,8 @@ export default class File extends Entity {
       parentPath: this.parentPath,
       rights: this.rights(user, shareKey),
       expirationDate: this.expire || null,
-      links: this.getLinks(user, shareKey)
+      links: this.getLinks(user, shareKey),
+      shareKey: this.shareKey || null,
     }
   }
 }
