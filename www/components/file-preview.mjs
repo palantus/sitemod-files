@@ -2,7 +2,7 @@ const elementName = 'file-preview-component'
 
 import api from "../system/api.mjs"
 import {sizeToName} from "../pages/file.mjs"
-import { stylesheets } from "../system/core.mjs"
+import { stylesheets, apiURL } from "../system/core.mjs"
 
 const template = document.createElement('template');
 template.innerHTML = `
@@ -73,6 +73,9 @@ class Element extends HTMLElement {
   async refreshPreview(){
     let file = this.file
     let downloadUrl = this.federationId ? `federation/${this.federationId}/api/file/dl/${this.fileId}` : `file/dl/${this.fileId}`
+    // let rawUrl = this.federationId ? `federation/${this.federationId}/api/file/raw/${this.fileId}` : `file/dl/${this.fileId}`
+    let rawUrl = `${apiURL()}/file/raw/${file.id}${file.name ? `/${encodeURI(file.name.replace("#", ""))}` : ''}?shareKey=${file.shareKey}`;
+
     this.shadowRoot.getElementById("preview").innerHTML = ""
     if(file.type != "file") return;
     switch(file.mime){
@@ -121,7 +124,7 @@ class Element extends HTMLElement {
       case "video/webm": {
         this.shadowRoot.getElementById("preview").innerHTML = `
         <video controls>
-          <source src="${this.file.links?.raw}" type="${file.mime}">
+          <source src="${rawUrl}" type="${file.mime}">
           Your browser does not support the video tag.
         </video> 
         `
@@ -131,7 +134,7 @@ class Element extends HTMLElement {
       case "audio/mpeg": {
         this.shadowRoot.getElementById("preview").innerHTML = `
         <audio controls>
-          <source src="${this.file.links?.raw}" type="${file.mime}">
+          <source src="${rawUrl}" type="${file.mime}">
           Your browser does not support the audio tag.
         </audio> 
         `
