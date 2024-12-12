@@ -4,7 +4,7 @@ import api from "../../system/api.mjs"
 import "../../components/field-edit.mjs"
 import {on, off} from "../../system/events.mjs"
 import { closeRightbar } from "../../pages/rightbar/rightbar.mjs"
-import {goto, stylesheets} from "../../system/core.mjs"
+import {goto, stylesheets, apiURL} from "../../system/core.mjs"
 import "../../components/acl.mjs"
 
 const template = document.createElement('template');
@@ -119,12 +119,10 @@ class Element extends HTMLElement {
 
   async downloadFile(){
     if(typeof window.showSaveFilePicker === "undefined") { //Firefox
-      let file = this.file = (await api.query(`{
-        file(id: ${this.fileId}){
-          links{download}
-        }
-      }`)).file
-      window.open(file.links?.download)
+      let file = this.file;
+      let {token} = await api.get("me/token")
+      let downloalUrl = `${apiURL()}/file/dl/${file.id}${file.name ? `/${encodeURI(file.name.replace("#", ""))}` : ''}?token=${token}`;
+      window.open(downloalUrl);
       return;
     }
     

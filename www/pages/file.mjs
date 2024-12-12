@@ -1,6 +1,6 @@
 const elementName = 'file-page'
 
-import {state, setPageTitle, stylesheets} from "../system/core.mjs"
+import {state, setPageTitle, stylesheets, apiURL} from "../system/core.mjs"
 import api from "../system/api.mjs"
 import {userPermissions} from "../system/user.mjs"
 import "../components/field-edit.mjs"
@@ -125,7 +125,10 @@ class Element extends HTMLElement {
 
   async downloadFile(){
     if(typeof window.showSaveFilePicker === "undefined") { //Firefox
-      window.open(this.file.links?.download)
+      let file = this.file;
+      let {token} = await api.get("me/token")
+      let downloalUrl = `${apiURL()}/file/dl/${file.id}${file.name ? `/${encodeURI(file.name.replace("#", ""))}` : ''}?token=${token}`;
+      window.open(downloalUrl);
       return;
     }
     

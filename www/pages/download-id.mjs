@@ -83,11 +83,11 @@ class Element extends HTMLElement {
   }
 
   async downloadFile(){
-    if(this.sourcePath){
       let {token} = await api.get("me/token")
+    if(this.sourcePath){
       window.open(`${apiURL()}/${this.sourcePath}/file/download/${this.fileId}?token=${token}`)
     } else {
-      window.open(this.file.links?.download) 
+      window.open(`${apiURL()}/file/download/${this.fileId}?token=${token}`)
     }
   }
 
